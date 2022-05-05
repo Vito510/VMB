@@ -558,9 +558,9 @@ async def on_voice_state_update(member,before,after):
 
 @client.event
 async def on_ready():
-    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 45 (New cache system yay)'.format(client.user),fg="green")
+    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 45'.format(client.user),fg="green")
 
-    logging.info('Logged in as {0} ({0.id}) -Version 45 (New cache system yay)'.format(client.user))
+    logging.info('Logged in as {0} ({0.id}) -Version 45'.format(client.user))
 
     await client.change_presence(activity=discord.Game(name="with your mother"))
     click.echo(json.dumps(configuration,indent=4))
@@ -577,5 +577,5 @@ if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(clien
 #ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM VMB
 #ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU VAR
 
-client.run('ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU')
+client.run('ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM')
 
