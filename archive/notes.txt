@@ -1,0 +1,5 @@
+43 - Added colors and tests
+43.5 - fixed Already playing audio infinite loop
+44 - Added new I/O messages system (Packs), removed komedija, Fixed extra \n in queue, ffmpeg quiet mode, loop choice
+45 - Novi cache sustav, leave sada clear-a queue i reset-a loop postavke 
+
