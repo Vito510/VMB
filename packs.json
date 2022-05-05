@@ -1,0 +1,21 @@
+[{
+    "name": "VitoPack",
+    "type": "IO",
+    "weight": 0.25,
+    "dir": "packs/VitoPack"
+},{
+    "name": "KendiPack",
+    "type": "IO",
+    "weight": 0.25,
+    "dir": "packs/KendiPack"
+},{
+    "name": "JagorPack",
+    "type": "IO",
+    "weight": 0.25,
+    "dir": "packs/JagorPack"
+},{
+    "name": "FF7RemakePack",
+    "type": "I",
+    "weight": 0.05,
+    "dir": "packs/FF7RemakePack"
+}]
