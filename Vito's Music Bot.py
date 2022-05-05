@@ -132,8 +132,8 @@ async def play_next(ctx):
 
         try:
             if queue_index < len(queue):
-                #msg = ('**`'+'Now playing track {}: {}'.format(queue_index,queue_title[queue_index])+'`**')
-                #if Stop == False: await ctx.send(msg,delete_after=10)       #now playing message
+                msg = ('**`'+'Now playing track {}: {}'.format(queue_index,queue_title[queue_index])+'`**')
+                if Stop == False: await ctx.send(msg,delete_after=10)       #now playing message
                 ctx.voice_client.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
 
                 queue_index += 1
@@ -381,10 +381,7 @@ class Media_Controls(commands.Cog):
             title = functions.get_title(search)
             queue_title.append(title)
 
-            if ctx.voice_client.is_playing() == True: 
-                await ctx.send("Queued: "+title)
-            else:
-                await ctx.send("Playing: "+title)
+            if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
         elif t == 2:
             if functions.is_supported(search) == False:
                 await ctx.send("Unsupported URL")
@@ -408,8 +405,6 @@ class Media_Controls(commands.Cog):
             queue_title.append(search[1])
             if ctx.voice_client.is_playing() == True: 
                 await ctx.send("Queued: "+search[1])
-            else:
-                await ctx.send("Playing: "+search[1])
 
         if FirstTimeSetup == True:
             Stop = False
@@ -472,12 +467,10 @@ class Media_Controls(commands.Cog):
             logging.info("loop() - looping disabled")
 
             await ctx.send("Looping disabled")
-
         else:
             queueMode = "loop"
             click.secho(functions.timestamp()+"loop() - looping enabled",fg="green")
             logging.info("loop() - looping enabled")
-
 
             await ctx.send("Looping the queue")
 
