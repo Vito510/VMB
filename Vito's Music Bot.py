@@ -48,7 +48,7 @@ if 'quiet' in ffmpeg_options['options']:
 if configuration['MaxCacheAge'] != 0: cache.clear(configuration['MaxCacheAge'])
 
 queueMode = configuration["queueMode"]
-client = commands.Bot(command_prefix='V ')
+client = commands.Bot(command_prefix='Vito ')
 ytdl = YoutubeDL(ytdl_format_options)
 Stop = False
 FirstTimeSetup = True
@@ -449,6 +449,8 @@ class Media_Controls(commands.Cog):
     async def clear(self, ctx):
         """Clears the queue"""
         global queue,queue_title,queue_index,Stop,FirstTimeSetup
+        if len(queue_title) == 0:
+            return None
         if await check_if_connected_and_connect(ctx) == False: return 0
         ctx.voice_client.stop()
         Stop = True
@@ -519,7 +521,7 @@ async def join(ctx):
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
     """Leaves a voice channel"""
-    await Media_Controls.clear(ctx)
+    await Media_Controls.clear(0,ctx)
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
 
@@ -574,8 +576,12 @@ client.add_cog(Media_Controls(client))
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
-#ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM VMB
-#ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU VAR
+if configuration["debugMode"]:
+    click.secho("debugMode is enabled",fg="yellow")
+    token = "ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU"  
+else:
+    token = "ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM"
 
-client.run('ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM')
+
+client.run(token)
 
