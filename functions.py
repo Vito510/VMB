@@ -5,7 +5,7 @@ import os
 import re
 import time
 from urllib.parse import parse_qs, urlparse
-
+from html import unescape
 import click
 import googleapiclient.discovery
 import youtube_dl
@@ -138,12 +138,16 @@ def youtube_searchGOOD(search):
 
             return youtube_search(search)
 
+        if len(response["items"]) == 0:
+            click.secho(timestamp()+"youtube_searchGOOD() - No results found", fg="red")
+            return None
+
         search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
         search_title = response['items'][0]['snippet']['title']
         cache.save(search,search_url,search_title,0)
     else:
         search_url = c['url']
-        search_title = c['title']
+        search_title = unescape(c['title'])
 
     t = str(round((time.time()-start_time)*1000))+'ms'
     click.secho(timestamp()+'Found[YT-API-v3]: '+search_title+' in '+t, fg='green')
