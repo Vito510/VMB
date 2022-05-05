@@ -138,6 +138,10 @@ def youtube_searchGOOD(search):
 
             return youtube_search(search)
 
+        if len(response["items"]) == 0:
+            click.secho(timestamp()+"youtube_searchGOOD() - No results found", fg="red")
+            return None
+
         search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
         search_title = response['items'][0]['snippet']['title']
         cache.save(search,search_url,search_title,0)

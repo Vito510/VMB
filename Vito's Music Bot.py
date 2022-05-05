@@ -400,6 +400,10 @@ class Media_Controls(commands.Cog):
             else:
                 search = functions.youtube_search(search)
 
+            if search == None:
+                await ctx.send("No results found")
+                return 0
+
             queue.append(search[0])
             queue_title.append(search[1])
             if ctx.voice_client.is_playing() == True: 
