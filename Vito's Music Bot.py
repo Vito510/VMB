@@ -150,9 +150,9 @@ async def play_next(ctx):
             queue_index = 0
             await play_next(ctx)
         elif queueMode == "none":
-            click.secho(functions.timestamp()+"play_next() - queue is empty, stoping playback",fg="yellow")
-            logging.warning("play_next() - queue is empty, stoping playback")
-            await Media_Controls.clear(0,ctx)
+            #stop
+            Stop = True
+            FirstTimeSetup = True
             return 0
 
 async def check_if_connected_and_connect(ctx):
@@ -314,6 +314,8 @@ class Media_Controls(commands.Cog):
         x = random.randint
         random.Random(x).shuffle(queue)
         random.Random(x).shuffle(queue_title)
+        #jump to the first song
+        await Media_Controls.jump(self,ctx,0)
         await ctx.send("YES JAGOR THE SHUFFLE COMMAND WORKS")
         
     @commands.command(aliases=["j"])
