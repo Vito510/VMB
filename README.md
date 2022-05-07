@@ -3,7 +3,7 @@
 
 Vito's music bot is definitely my biggest project to date.
 
-It's another discord music bot BUT it's MINE and I can do with it whatever i want
+It's another discord music bot BUT it's MINE and I can do with it whatever i want with it.
 
 It contains:
 - Youtube playback
