@@ -288,7 +288,7 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        await ctx.send("Now playing: "+str(queue_title[queue_index-1]))
+        await ctx.send("Currently playing: "+str(queue_title[queue_index-1]))
 
     @commands.command()
     async def fuck(self, ctx):
@@ -308,7 +308,7 @@ class Media_Controls(commands.Cog):
 
     @commands.command()
     async def shuffle(self, ctx):
-        global queue,queue_title
+        global queue,queue_0je
         """Shuffles the queue"""
         if await check_if_connected_and_connect(ctx) == False: return 0
         x = random.randint
@@ -324,12 +324,20 @@ class Media_Controls(commands.Cog):
         global queue,queue_index,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
         Stop = False
-        if len(queue)*-1 < int(number) < len(queue):
-            queue_index = int(number)
+
+        try: 
+            number = int(number)
+        except:
+            await ctx.send("Bruh thats not a number")
+            return 0
+    
+        if len(queue)*-1 <= number < len(queue):
+            if number < 0: number = len(queue)+number
+            queue_index = number
             if not s: click.secho(functions.timestamp()+"jump() - jumping to track: "+str(number),fg="green")
             logging.info("jump() - jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
-        else: await ctx.send("List index out of range")
+        else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
@@ -351,7 +359,7 @@ class Media_Controls(commands.Cog):
         global queue_index
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        if FirstTimeSetup == True: 
+        if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
             if queue_index - 1 >= 0: queue_index = queue_index - 2
@@ -423,12 +431,9 @@ class Media_Controls(commands.Cog):
                 await ctx.send("The queue is empty dumbass")
                 return 0
 
-            t = 0
-            if queueMode == 'none': t = queue_index-1
-
-            for i in range(t,len(queue_title)):
+            for i in range(len(queue_title)):
                 if i == queue_index-1: 
-                    f.write('{}: {} <-- [NOW PLAYING]\n'.format(i,queue_title[int(i)].replace('\n','')))
+                    f.write('\t--> {}: {} <--\n'.format(i,queue_title[int(i)].replace('\n','')))
                 else:
                     f.write('{}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
 
