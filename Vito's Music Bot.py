@@ -117,9 +117,6 @@ async def play_next(ctx):
 
 
     if queue_index < len(queue):
-                                                                                                   #loop queue?
-        #print(functions.timestamp()+"play_next() - playing next - ","Index:",queue_index,"Queue size:",len(queue))                                                                  #Remove previous "now playing" message
-
         if functions.queue_type(queue[queue_index]) == 0: 
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]))                               #local music source
         else: 
@@ -315,7 +312,7 @@ class Media_Controls(commands.Cog):
         random.Random(x).shuffle(queue)
         random.Random(x).shuffle(queue_title)
         #jump to the first song
-        await Media_Controls.jump(self,ctx,0)
+        await Media_Controls.jump(self,ctx,number=0)
         await ctx.send("YES JAGOR THE SHUFFLE COMMAND WORKS")
         
     @commands.command(aliases=["j"])
