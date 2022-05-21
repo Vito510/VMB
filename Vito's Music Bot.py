@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import random
+import sys
 
 import click
 import cache
@@ -356,10 +357,17 @@ class Media_Controls(commands.Cog):
         global queue_index
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
+        print(queue_index,len(queue))
         if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            if queue_index - 1 >= 0: queue_index = queue_index - 2
+            if queue_index == len(queue): 
+                queue_index -= 1
+                await play_next(ctx)
+                return 0
+            else: 
+                queue_index -= 2
+
             if not s: click.secho(functions.timestamp()+"back() - playing previous track: "+str(queue_index),fg="green")
             logging.info("back() - playing previous track: "+str(queue_index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
@@ -542,6 +550,7 @@ async def on_voice_state_update(member,before,after):
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
             await member.guild.voice_client.disconnect()
             Stop = True
+            loopMode = "none"
             queue = []
             queue_title = []
             queue_index = int(0)
@@ -573,11 +582,18 @@ client.add_cog(Media_Controls(client))
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
-if configuration["debugMode"]:
+
+with open('token.json', 'r') as f:
+    token = json.load(f)
+
+if '--debug' in sys.argv:
     click.secho("debugMode is enabled",fg="yellow")
-    token = "ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU"  
+    try:
+        token = token['token_debug']
+    except:
+        token = token['token']  
 else:
-    token = "ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM"
+    token = token['token']
 
 
 client.run(token)
