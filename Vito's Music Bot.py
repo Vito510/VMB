@@ -7,11 +7,11 @@ import random
 import sys
 
 import click
-import cache
 import discord
 from discord.ext import commands
 from yt_dlp import YoutubeDL
 
+import cache
 import functions
 import pack
 
@@ -41,7 +41,10 @@ ytdl_format_options = {
     'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
-ffmpeg_options = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn -v quiet'}
+ffmpeg_options = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
+    'options': '-vn -v quiet'
+}
 
 if 'quiet' in ffmpeg_options['options']:
     click.secho('ffmpeg quiet mode enabled',fg='red',bg='black')
@@ -520,15 +523,17 @@ async def join(ctx):
 
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
+    global loopMode
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
+    loopMode = configuration["LoopMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
 
 
 @client.event
 async def on_voice_state_update(member,before,after):
-    global Stop, queue, queue_title, queue_index, FirstTimeSetup
+    global Stop, queue, queue_title, queue_index, FirstTimeSetup, loopMode
     if before.channel != None:
         vc = client.get_channel(before.channel.id)
 
@@ -545,7 +550,7 @@ async def on_voice_state_update(member,before,after):
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
             await member.guild.voice_client.disconnect()
             Stop = True
-            loopMode = "none"
+            loopMode = configuration["LoopMode"]
             queue = []
             queue_title = []
             queue_index = int(0)
@@ -563,7 +568,7 @@ async def on_voice_state_update(member,before,after):
 async def on_ready():
     click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 45'.format(client.user),fg="green")
 
-    logging.info('Logged in as {0} ({0.id}) -Version 45'.format(client.user))
+    logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
 
     await client.change_presence(activity=discord.Game(name="with your mother"))
     click.echo(json.dumps(configuration,indent=4))
