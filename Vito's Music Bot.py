@@ -289,7 +289,12 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        await ctx.send("Currently playing: "+str(queue_title[queue_index-1]))
+        x = str(queue[queue_index-1])
+
+        if 'http' not in x:
+            x = str(queue_title[queue_index-1])
+
+        await ctx.send("Currently playing:\n"+x)
 
     @commands.command()
     async def fuck(self, ctx):
@@ -385,17 +390,31 @@ class Media_Controls(commands.Cog):
         t = functions.play_type(search)
 
         if t == 1:
+            #PLaylist
             playlist = functions.list_from_playlist(search)
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
             await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
         elif t == 0:
-            queue.append(search)
-            title = functions.get_title(search)
-            queue_title.append(title)
+            #YT link
+
+            c = cache.load(search,2)
+
+            if c == None:
+                queue.append(search)
+                title = functions.get_title(search)
+                queue_title.append(title)
+
+                cache.save(search,search,title,2)
+            else:
+                queue.append(c['url'])
+                title = c['title']
+                queue_title.append(title)
+
 
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
         elif t == 2:
+            #URL
             if functions.is_supported(search) == False:
                 await ctx.send("Unsupported URL")
                 return 0
@@ -566,7 +585,7 @@ async def on_voice_state_update(member,before,after):
 
 @client.event
 async def on_ready():
-    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 45'.format(client.user),fg="green")
+    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 46'.format(client.user),fg="green")
 
     logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
 
