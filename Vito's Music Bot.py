@@ -361,13 +361,8 @@ class Media_Controls(commands.Cog):
         if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            if queue_index == len(queue): 
-                queue_index -= 1
-                await play_next(ctx)
-                return 0
-            else: 
-                queue_index -= 2
-
+            await Media_Controls.jump(self,ctx,number=queue_index-1)
+ 
             if not s: click.secho(functions.timestamp()+"back() - playing previous track: "+str(queue_index),fg="green")
             logging.info("back() - playing previous track: "+str(queue_index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
