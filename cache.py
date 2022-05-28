@@ -54,6 +54,8 @@ def save(x,url,title,t):
         path = 'cache/search.json'
     elif t == 1:
         path = 'cache/playlist.json'
+    elif t == 2:
+        path = 'cache/url.json'
 
     try:
         with open(path) as f:
@@ -77,6 +79,8 @@ def load(x,t):
         path = 'cache/search.json'
     elif t == 1:
         path = 'cache/playlist.json'
+    elif t == 2:
+        path = 'cache/url.json'
 
     with open(path) as f:
         data = json.load(f)

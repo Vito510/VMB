@@ -1,7 +1,7 @@
 {
     "UseYoutubeSearchAPI": true,
     "EnableCacheing": false,
-    "JoinLeaveMessages": false,
+    "JoinLeaveMessages": true,
     "AllowHostLocalFiles": false,
     "EnableTestCommands": false,
     "AllowEndSession": true,
@@ -10,9 +10,8 @@
         427520096504905729,
         440966108577660930
     ],
-    "AloneTime": 300,
+    "AloneTime": 120,
     "queueMode": "none",
     "MaxCacheAge": 0,
-    "ffmpegWait": 0.75,
-    "debugMode": true
+    "ffmpegWait": 0.75
 }

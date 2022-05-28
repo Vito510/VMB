@@ -4,13 +4,14 @@ import json
 import logging
 import os
 import random
+import sys
 
 import click
-import cache
 import discord
 from discord.ext import commands
 from yt_dlp import YoutubeDL
 
+import cache
 import functions
 import pack
 
@@ -40,7 +41,10 @@ ytdl_format_options = {
     'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
-ffmpeg_options = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn -v quiet'}
+ffmpeg_options = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
+    'options': '-vn -v quiet'
+}
 
 if 'quiet' in ffmpeg_options['options']:
     click.secho('ffmpeg quiet mode enabled',fg='red',bg='black')
@@ -117,9 +121,6 @@ async def play_next(ctx):
 
 
     if queue_index < len(queue):
-                                                                                                   #loop queue?
-        #print(functions.timestamp()+"play_next() - playing next - ","Index:",queue_index,"Queue size:",len(queue))                                                                  #Remove previous "now playing" message
-
         if functions.queue_type(queue[queue_index]) == 0: 
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]))                               #local music source
         else: 
@@ -288,7 +289,12 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        await ctx.send("Now playing: "+str(queue_title[queue_index-1]))
+        x = str(queue[queue_index-1])
+
+        if 'http' not in x:
+            x = str(queue_title[queue_index-1])
+
+        await ctx.send("Currently playing:\n"+x)
 
     @commands.command()
     async def fuck(self, ctx):
@@ -308,14 +314,14 @@ class Media_Controls(commands.Cog):
 
     @commands.command()
     async def shuffle(self, ctx):
-        global queue,queue_title
+        global queue,queue_0je
         """Shuffles the queue"""
         if await check_if_connected_and_connect(ctx) == False: return 0
         x = random.randint
         random.Random(x).shuffle(queue)
         random.Random(x).shuffle(queue_title)
         #jump to the first song
-        await Media_Controls.jump(self,ctx,0)
+        await Media_Controls.jump(self,ctx,number=0)
         await ctx.send("YES JAGOR THE SHUFFLE COMMAND WORKS")
         
     @commands.command(aliases=["j"])
@@ -324,12 +330,20 @@ class Media_Controls(commands.Cog):
         global queue,queue_index,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
         Stop = False
-        if len(queue)*-1 < int(number) < len(queue):
-            queue_index = int(number)
+
+        try: 
+            number = int(number)
+        except:
+            await ctx.send("Bruh thats not a number")
+            return 0
+    
+        if len(queue)*-1 <= number < len(queue):
+            if number < 0: number = len(queue)+number
+            queue_index = number
             if not s: click.secho(functions.timestamp()+"jump() - jumping to track: "+str(number),fg="green")
             logging.info("jump() - jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
-        else: await ctx.send("List index out of range")
+        else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
@@ -351,10 +365,12 @@ class Media_Controls(commands.Cog):
         global queue_index
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        if FirstTimeSetup == True: 
+        print(queue_index,len(queue))
+        if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            if queue_index - 1 >= 0: queue_index = queue_index - 2
+            await Media_Controls.jump(self,ctx,number=queue_index-1)
+ 
             if not s: click.secho(functions.timestamp()+"back() - playing previous track: "+str(queue_index),fg="green")
             logging.info("back() - playing previous track: "+str(queue_index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
@@ -374,17 +390,31 @@ class Media_Controls(commands.Cog):
         t = functions.play_type(search)
 
         if t == 1:
+            #PLaylist
             playlist = functions.list_from_playlist(search)
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
             await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
         elif t == 0:
-            queue.append(search)
-            title = functions.get_title(search)
-            queue_title.append(title)
+            #YT link
+
+            c = cache.load(search,2)
+
+            if c == None:
+                queue.append(search)
+                title = functions.get_title(search)
+                queue_title.append(title)
+
+                cache.save(search,search,title,2)
+            else:
+                queue.append(c['url'])
+                title = c['title']
+                queue_title.append(title)
+
 
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
         elif t == 2:
+            #URL
             if functions.is_supported(search) == False:
                 await ctx.send("Unsupported URL")
                 return 0
@@ -423,12 +453,9 @@ class Media_Controls(commands.Cog):
                 await ctx.send("The queue is empty dumbass")
                 return 0
 
-            t = 0
-            if queueMode == 'none': t = queue_index-1
-
-            for i in range(t,len(queue_title)):
+            for i in range(len(queue_title)):
                 if i == queue_index-1: 
-                    f.write('{}: {} <-- [NOW PLAYING]\n'.format(i,queue_title[int(i)].replace('\n','')))
+                    f.write('\t--> {}: {} <--\n'.format(i,queue_title[int(i)].replace('\n','')))
                 else:
                     f.write('{}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
 
@@ -515,15 +542,17 @@ async def join(ctx):
 
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
+    global loopMode
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
+    loopMode = configuration["LoopMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
 
 
 @client.event
 async def on_voice_state_update(member,before,after):
-    global Stop, queue, queue_title, queue_index, FirstTimeSetup
+    global Stop, queue, queue_title, queue_index, FirstTimeSetup, loopMode
     if before.channel != None:
         vc = client.get_channel(before.channel.id)
 
@@ -540,6 +569,7 @@ async def on_voice_state_update(member,before,after):
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
             await member.guild.voice_client.disconnect()
             Stop = True
+            loopMode = configuration["LoopMode"]
             queue = []
             queue_title = []
             queue_index = int(0)
@@ -555,9 +585,9 @@ async def on_voice_state_update(member,before,after):
 
 @client.event
 async def on_ready():
-    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 45'.format(client.user),fg="green")
+    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 46'.format(client.user),fg="green")
 
-    logging.info('Logged in as {0} ({0.id}) -Version 45'.format(client.user))
+    logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
 
     await client.change_presence(activity=discord.Game(name="with your mother"))
     click.echo(json.dumps(configuration,indent=4))
@@ -571,11 +601,18 @@ client.add_cog(Media_Controls(client))
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
-if configuration["debugMode"]:
+
+with open('token.json', 'r') as f:
+    token = json.load(f)
+
+if '--debug' in sys.argv:
     click.secho("debugMode is enabled",fg="yellow")
-    token = "ODg5OTU4Mjg1NDIyMjY0MzQw.YUo0PQ.JsWxYEpYgHFPxYFxiReDpU715CU"  
+    try:
+        token = token['token_debug']
+    except:
+        token = token['token']  
 else:
-    token = "ODQ1MzM4NTkyNjIzNzIyNTI2.YKfg6g.-qnFl4pnyRh4a7NfckqUiNU4OnM"
+    token = token['token']
 
 
 client.run(token)
