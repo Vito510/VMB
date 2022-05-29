@@ -567,9 +567,12 @@ async def on_voice_state_update(member,before,after):
         vc = client.get_channel(before.channel.id)
 
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
+            guild = client.get_guild(before.channel.guild.id)
+            guild.voice_client.stop()
+
             await member.guild.voice_client.disconnect()
             Stop = True
-            loopMode = configuration["LoopMode"]
+            loopMode = configuration["queueMode"]
             queue = []
             queue_title = []
             queue_index = int(0)
