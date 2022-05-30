@@ -222,16 +222,6 @@ def list_from_playlist(url):
 
 def create():
     """Creates all the files/folders the bot needs"""
-    if not os.path.isfile('token.json'):
-        click.echo("Creating token.json")
-        logging.info("Creating token.json")
-
-        with open('token.json', 'w') as f:
-            json.dump({'token':'YOUR_TOKEN','token_debug':'SECONDARY_TOKEN_FOR_DEBUG'}, f, indent=4)
-
-        click.echo("Put your token in token.json")
-        exit()
-
     if not os.path.isdir('cache'):
         click.echo("Creating cache folder")
         logging.info("Creating cache folder")
@@ -259,3 +249,13 @@ def create():
 
         with open('packs.json', 'w') as f:
             json.dump([{'name':'example','type':'IO','weight':1,'dir':'packs/examplePack'}], f, indent=4)
+
+    if not os.path.isfile('token.json'):
+        click.echo("Creating token.json")
+        logging.info("Creating token.json")
+
+        with open('token.json', 'w') as f:
+            json.dump({'token':'YOUR_TOKEN','token_debug':'SECONDARY_TOKEN_FOR_DEBUG'}, f, indent=4)
+
+        click.echo("Put your token in token.json")
+        exit()
