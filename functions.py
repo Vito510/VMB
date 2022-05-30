@@ -228,6 +228,12 @@ def create():
 
         os.mkdir('cache')
 
+        stuff = ['playlist.json','search.json','url.json']
+
+        for i in stuff:
+            with open('cache/'+i, "w") as f:
+                f.write("{}")   
+
     if not os.path.isdir('logs'):
         click.echo("Creating logs folder")
         logging.info("Creating logs folder")
@@ -240,13 +246,13 @@ def create():
 
         os.mkdir('packs')
 
-        with open('packs/exampleIN.txt', 'w') as f:
+        with open('packs/example_I.txt', 'w') as f:
             f.write("Hello World!\nHello Again!")
 
-        with open('packs/exampleOUT.txt', 'w') as f:
+        with open('packs/example_O.txt', 'w') as f:
             f.write("Bye!\nGoodbye!")
 
-        with open('packs/exampleINOUT.txt', 'w') as f:
+        with open('packs/example2_O.txt', 'w') as f:
             f.write("Don't now what to say!\nFunny?")
 
         
@@ -256,9 +262,8 @@ def create():
         logging.info("Creating packs.json")
 
         with open('packs.json', 'w') as f:
-            x = [{'name':'exampleIN','type':'I','weight':1,'dir':'packs/exampleIN'},
-                 {'name':'exampleOUT','type':'O','weight':1,'dir':'packs/exampleOUT'},
-                 {'name':'exampleINOUT','type':'IO','weight':1,'dir':'packs/exampleINOUT'}]
+            x = [{'name':'example','type':'IO','weight':0.5,'dir':'packs/example'},
+                 {'name':'example2','type':'O','weight':0.5,'dir':'packs/example2'}]
             json.dump(x, f, indent=4)
 
     if not os.path.isfile('token.json'):

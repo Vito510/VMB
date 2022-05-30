@@ -168,9 +168,14 @@ async def check_if_connected_and_connect(ctx):
             if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
 
             return True
-        except:
+        except discord.errors.ClientException:
             await ctx.send("You have to be connected to a voice channel")
             return False
+        except Exception as e:
+            click.secho(functions.timestamp()+"check_if_connected_and_connect() - error: "+str(e),fg="red")
+            logging.error("check_if_connected_and_connect() - error: "+str(e))
+            return False
+    
 
 class Folder_Exploration(commands.Cog):
     """Folder exploration"""
@@ -239,7 +244,9 @@ class Folder_Exploration(commands.Cog):
     async def list(self, ctx):
         """Lists all files in the current album/directory"""
         click.secho(functions.timestamp()+"list() - sending list",fg="green")
-        await ctx.send(file=discord.File(functions.generate_dir_list(path)))
+        file = functions.generate_dir_list(path)
+        await ctx.send(file=discord.File(file))
+        os.remove(file)
 
     @commands.command()
     async def folder(self, ctx, *, directory):
@@ -460,6 +467,7 @@ class Media_Controls(commands.Cog):
                     f.write('{}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
 
         await ctx.send(file=discord.File('cache/queue.txt'))
+        os.remove("cache/queue.txt")
 
     @commands.command(aliases=["del","remove"])
     async def delete(self, ctx, integer):
@@ -545,7 +553,7 @@ async def leave(ctx):
     global loopMode
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
-    loopMode = configuration["LoopMode"]
+    loopMode = configuration["queueMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
 
