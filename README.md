@@ -5,12 +5,21 @@ Vito's music bot is definitely my biggest project to date.
 
 It's another discord music bot BUT it's MINE and I can do with it whatever i want with it.
 
+<h2>Youtube support</h2>
+This bot supports youtube playback and playback of youtube playlists.
+<br></br>
 
-It contains:
-- Youtube playback
-- Local file playback
-- Youtube playlists support
-- Built in youtube search
+**Youtube playback:**
+
+![ytsearchsupport](https://user-images.githubusercontent.com/73427833/170981276-9c2f858d-8733-4a15-8657-7495d8f7a8c2.png)
+
+**Youtube playlist playback**
+
+![ytplaylist](https://user-images.githubusercontent.com/73427833/170981633-7055a6ff-6b02-457a-86b0-8ba872df2cc3.png)
+
+<h2>Local file playback</h2>
+
+This bot supports audio playback of local audio/video files
 
 <h2>Packs</h2>
 
