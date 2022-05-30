@@ -240,15 +240,26 @@ def create():
 
         os.mkdir('packs')
 
-        with open('packs/example.txt', 'w') as f:
-            f.write("Hello World!")
+        with open('packs/exampleIN.txt', 'w') as f:
+            f.write("Hello World!\nHello Again!")
+
+        with open('packs/exampleOUT.txt', 'w') as f:
+            f.write("Bye!\nGoodbye!")
+
+        with open('packs/exampleINOUT.txt', 'w') as f:
+            f.write("Don't now what to say!\nFunny?")
+
+        
 
     if not os.path.isfile('packs.json'):
         click.echo("Creating packs.json")
         logging.info("Creating packs.json")
 
         with open('packs.json', 'w') as f:
-            json.dump([{'name':'example','type':'IO','weight':1,'dir':'packs/examplePack'}], f, indent=4)
+            x = [{'name':'exampleIN','type':'I','weight':1,'dir':'packs/exampleIN'},
+                 {'name':'exampleOUT','type':'O','weight':1,'dir':'packs/exampleOUT'},
+                 {'name':'exampleINOUT','type':'IO','weight':1,'dir':'packs/exampleINOUT'}]
+            json.dump(x, f, indent=4)
 
     if not os.path.isfile('token.json'):
         click.echo("Creating token.json")

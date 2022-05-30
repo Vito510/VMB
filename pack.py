@@ -3,9 +3,6 @@
 import json
 import random
 
-x = json.load(open('packs.json'))
-
-
 def pick(mode):
     if mode == 0:
         e = '_I'
@@ -23,6 +20,7 @@ def pick(mode):
 
 
 def select():
+    x = json.load(open('packs.json'))
     total = 0
     for i in x:
         total += i['weight']

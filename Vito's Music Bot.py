@@ -17,13 +17,12 @@ import pack
 
 #from youtube_dl import YoutubeDL
 
+functions.create()
 
 bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
 
 x = datetime.datetime.now()
 logging.basicConfig(filename='./logs/{}.log'.format(x.strftime("%d-%m-%Y %H-%M-%S")),format='[%(levelname)s] [%(asctime)s] - %(message)s', level=logging.INFO)
-
-functions.create()
 
 with open('config.json') as f:
     configuration = json.load(f)
