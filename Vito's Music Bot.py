@@ -604,6 +604,15 @@ client.add_cog(Media_Controls(client))
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
+if not os.path.isfile('token.json'):
+    click.echo("Creating token.json")
+    logging.info("Creating token.json")
+
+    with open('token.json', 'w') as f:
+        json.dump({'token':'YOUR_TOKEN','token_debug':'SECONDARY_TOKEN_FOR_DEBUG'}, f, indent=4)
+
+    click.echo("Put your token in token.json")
+    exit()
 
 with open('token.json', 'r') as f:
     token = json.load(f)
