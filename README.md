@@ -73,6 +73,7 @@ dir - The path of the text files without the _I or _O part and without the exten
 ```
 Files inside the pack folder:
   
+  
 - [example_I.txt](https://github.com/Vito510/VMB/files/8797688/example_I.txt)
 - [example_O.txt](https://github.com/Vito510/VMB/files/8797693/example_O.txt)
 - [example2_O.txt](https://github.com/Vito510/VMB/files/8797694/example2_O.txt)
