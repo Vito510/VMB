@@ -13,7 +13,7 @@ This bot supports youtube playback and playback of youtube playlists.
 
 ![ytsearchsupport](https://user-images.githubusercontent.com/73427833/170981276-9c2f858d-8733-4a15-8657-7495d8f7a8c2.png)
 
-**Youtube playlist playback**
+**Youtube playlist playback:**
 
 ![ytplaylist](https://user-images.githubusercontent.com/73427833/170981633-7055a6ff-6b02-457a-86b0-8ba872df2cc3.png)
 
@@ -45,7 +45,7 @@ Packs allow you to use a text file with lots of different lines you want your bo
 }
 ```
 
-name - Name of your pack, doesen't have to be equal to the text file name
+name - Name of your pack, doesn't have to be equal to the text file name
 
 type - This signifies to the bot which files exist (**I** - there is one <name>_I.txt file, **O** - there is one <name>_O.txt file, **IO** - There is both a <name>_I.txt and a <name>_O.txt file)
 
@@ -72,6 +72,7 @@ dir - The path of the text files without the _I or _O part and without the exten
 ]
 ```
 Files inside the pack folder:
+  
   
 - [example_I.txt](https://github.com/Vito510/VMB/files/8797688/example_I.txt)
 - [example_O.txt](https://github.com/Vito510/VMB/files/8797693/example_O.txt)
