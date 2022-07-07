@@ -556,7 +556,7 @@ async def leave(ctx):
     loopMode = configuration["queueMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
-
+    
 
 @client.event
 async def on_voice_state_update(member,before,after):
