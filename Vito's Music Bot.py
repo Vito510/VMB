@@ -51,8 +51,12 @@ if 'quiet' in ffmpeg_options['options']:
 
 if configuration['MaxCacheAge'] != 0: cache.clear(configuration['MaxCacheAge'])
 
+intents = discord.Intents.all()
+intents.members = True
+intents.presences = True
+
 queueMode = configuration["queueMode"]
-client = commands.Bot(command_prefix='Vito ')
+client = commands.Bot(command_prefix='Vito ', intents=intents)
 ytdl = YoutubeDL(ytdl_format_options)
 Stop = False
 FirstTimeSetup = True
@@ -61,11 +65,6 @@ queue = []
 queue_title = []
 queue_index = int(0)
 playlist = []
-
-intents = discord.Intents.default()
-intents.members = True
-intents.presences = True
-
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
@@ -596,6 +595,7 @@ async def on_voice_state_update(member,before,after):
 
 @client.event
 async def on_ready():
+    await client.add_cog(Media_Controls(client))
     click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 46'.format(client.user),fg="green")
 
     logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
@@ -608,7 +608,7 @@ async def on_ready():
     click.echo('----------------------------------------------- :)')
 
 
-client.add_cog(Media_Controls(client))
+
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
