@@ -73,7 +73,6 @@ def get_title(url):
     start_time = time.time()
     title = ytdl.extract_info(url, download=False)['title']
     t = str(round((time.time()-start_time)*1000))+'ms'
-    click.secho(timestamp()+'Found: '+title+' in '+t, fg='green')
     logging.info("Found: "+title+" in "+t)
     return title
 
@@ -87,7 +86,6 @@ def is_available(url):
         ytdl.extract_info(url, download=False)
         return True
     except Exception as e:
-        click.secho(timestamp()+"Error: URL is not available", fg="red")
         logging.error("Error: URL is not available: "+str(e))
         return False
 
@@ -109,8 +107,7 @@ def youtube_search(search):
         search_title = c['title']
     
     t = str(round((time.time()-start_time)*1000))+'ms'
-    click.secho(timestamp()+'Found: '+search_title+' in '+t, fg='green')
-    logging.info("Found: "+search_title+" in "+t)
+    logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
     
     return [search_url,search_title]
 
@@ -133,32 +130,29 @@ def youtube_searchGOOD(search):
         try:
             response = request.execute()
         except Exception as e:
-            click.secho(timestamp()+"youtube_searchGOOD() - Youtube API v3 Error - falling back to youtube_search()", fg="red")
-            logging.error("youtube_searchGOOD() - Youtube API v3 Error - falling back to youtube_search() - "+str(e))
+            logging.error("Youtube API v3 Error - falling back to youtube_search() - "+str(e))
 
             return youtube_search(search)
 
         if len(response["items"]) == 0:
-            click.secho(timestamp()+"youtube_searchGOOD() - No results found", fg="red")
+            logging.info("No results found")
             return None
 
         search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
-        search_title = response['items'][0]['snippet']['title']
+        search_title = unescape(response['items'][0]['snippet']['title'])
         cache.save(search,search_url,search_title,0)
     else:
         search_url = c['url']
         search_title = unescape(c['title'])
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    click.secho(timestamp()+'Found[YT-API-v3]: '+search_title+' in '+t, fg='green')
-    logging.info("Found[YT-API-v3]: "+search_title+" in "+t)
+    logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
 
     return [search_url,search_title]
 
 def generate_dir_list(dir):
     list_str = ""
     list_list = os.listdir(dir)
-    click.secho(timestamp()+"generate_dir_list_and_send() - generating directory list and sending", fg="green")
 
     for i in range(0,len(list_list)): list_str = list_str + (str(i) + ": " + list_list[i] + "\n") 
 
@@ -187,8 +181,7 @@ def list_from_playlist(url):
         try:
             response = request.execute()
         except Exception as e:
-            click.secho(timestamp()+"list_from_playlist() - Error in request", fg="red")
-            logging.error("list_from_playlist() - Error in request - "+str(e))
+            logging.error("Error in request - "+str(e))
 
             return []
 
@@ -214,8 +207,7 @@ def list_from_playlist(url):
 
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    click.secho(timestamp()+'Got[YT-API-v3]: {} items from {} in {}'.format(len(titles),playlist_id,t), fg='green')
-    logging.info("Got[YT-API-v3]: {} items from {} in {}".format(len(titles),playlist_id,t))
+    logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
 
 
     return [urls,titles]
@@ -223,7 +215,6 @@ def list_from_playlist(url):
 def create():
     """Creates all the files/folders the bot needs"""
     if not os.path.isdir('cache'):
-        click.echo("Creating cache folder")
         logging.info("Creating cache folder")
 
         os.mkdir('cache')
@@ -235,13 +226,11 @@ def create():
                 f.write("{}")   
 
     if not os.path.isdir('logs'):
-        click.echo("Creating logs folder")
         logging.info("Creating logs folder")
 
         os.mkdir('logs')
     
     if not os.path.isdir('packs'):
-        click.echo("Creating packs folder")
         logging.info("Creating packs folder")
 
         os.mkdir('packs')
@@ -258,7 +247,6 @@ def create():
         
 
     if not os.path.isfile('packs.json'):
-        click.echo("Creating packs.json")
         logging.info("Creating packs.json")
 
         with open('packs.json', 'w') as f:
@@ -267,7 +255,6 @@ def create():
             json.dump(x, f, indent=4)
 
     if not os.path.isfile('token.json'):
-        click.echo("Creating token.json")
         logging.info("Creating token.json")
 
         with open('token.json', 'w') as f:
