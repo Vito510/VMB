@@ -24,7 +24,7 @@ bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
 
 x = datetime.datetime.now()
 logging.basicConfig(
-    format='\x1B[30m%(asctime)s \x1B[1m\x1B[34m%(levelname)-8s \x1B[0m\x1B[35m%(module)s.%(funcName)s \x1B[0m%(message)s' 
+    format='\x1b[30;1m%(asctime)s \x1B[1m\x1B[34m%(levelname)-8s \x1B[0m\x1B[35m%(module)s.%(funcName)s \x1B[0m%(message)s' 
     if discord.utils.stream_supports_colour(sys.stdout) else '[%(asctime)s] [%(levelname)-8s] %(module)s.%(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
