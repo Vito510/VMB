@@ -112,8 +112,8 @@ def youtube_search(search):
     return [search_url,search_title]
 
 def youtube_searchGOOD(search):
-    global search_url,search_title
     '''Youtube search function from Youtube API v3'''
+    global search_url,search_title
 
     start_time = time.time()
 

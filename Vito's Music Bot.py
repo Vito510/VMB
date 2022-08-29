@@ -14,6 +14,7 @@ from yt_dlp import YoutubeDL
 import cache
 import functions
 import pack
+import spotify
 
 #from youtube_dl import YoutubeDL
 
@@ -538,6 +539,20 @@ async def clear_cache(ctx):
     
     logging.info("cleared")
     await ctx.send("Cleared cache")
+
+@client.command()
+async def recommend(ctx,limit=10):
+    """Adds similar tracks"""
+    tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
+
+    for track in tracks:
+        search = functions.youtube_searchGOOD(track)
+
+        queue.append(search[0])
+        queue_title.append(search[1])
+
+    await ctx.send("Queued "+str(len(tracks))+" tracks")
+
 
 
 @client.command()
