@@ -7,6 +7,8 @@ It's another discord music bot BUT it's MINE and I can do with it whatever i wan
 
 <h2>Youtube support</h2>
 This bot supports youtube playback and playback of youtube playlists.
+
+**<a href="https://developers.google.com/youtube/v3/getting-started" target="_blank">A Youtube Data API v3 key is required for playlist importing</a>*
 <br></br>
 
 **Youtube playback:**
