@@ -12,7 +12,7 @@ def pick(mode):
     pack = select()
 
     if e[1] in pack['type']:
-        with open(pack['dir']+e+'.txt','r') as f:
+        with open(pack['dir']+e+'.txt','r', encoding='utf-8') as f:
             lines = f.readlines()
             return random.choice(lines).replace('\n','')
     else:
@@ -20,7 +20,7 @@ def pick(mode):
 
 
 def select():
-    x = json.load(open('packs.json'))
+    x = json.load(open('packs.json','r',encoding='utf-8'))
     total = 0
     for i in x:
         total += i['weight']
