@@ -25,8 +25,8 @@ bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
 
 x = datetime.datetime.now()
 logging.basicConfig(
-    format='\x1b[30;1m%(asctime)s \x1B[1m\x1B[34m%(levelname)-8s \x1B[0m\x1B[35m%(module)s.%(funcName)s \x1B[0m%(message)s' 
-    if discord.utils.stream_supports_colour(sys.stdout) else '[%(asctime)s] [%(levelname)-8s] %(module)s.%(funcName)s: %(message)s',
+    format= u'\x1b[30;1m%(asctime)s \x1B[1m\x1B[34m%(levelname)-8s \x1B[0m\x1B[35m%(module)s.%(funcName)s \x1B[0m%(message)s' 
+    if discord.utils.stream_supports_colour(sys.stdout) else u'[%(asctime)s] [%(levelname)-8s] %(module)s.%(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
     handlers=[
@@ -546,6 +546,7 @@ async def recommend(ctx,limit=10):
     tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
 
     for track in tracks:
+        #Biggest bottleneck ever, might switch to last.fm API but then I will have to mess with the musicbrainz API
         search = functions.youtube_searchGOOD(track)
 
         queue.append(search[0])
