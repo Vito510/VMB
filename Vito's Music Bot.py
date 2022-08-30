@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import random
+import functools
+import typing
 import sys
 
 import click
@@ -118,6 +120,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 async def play_next(ctx):
     global Stop,queue_index,filename,msg,FirstTimeSetup, queueMode
@@ -545,15 +552,21 @@ async def recommend(ctx,limit=10):
     """Adds similar tracks"""
     tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
 
+    await getRecommendations(tracks)
+    await ctx.send("Queued "+str(len(tracks))+" tracks")
+
+@to_thread
+def getRecommendations(tracks):
     for track in tracks:
         #Biggest bottleneck ever, might switch to last.fm API but then I will have to mess with the musicbrainz API
-        search = functions.youtube_searchGOOD(track)
+        
+        if configuration['UseYTAPIforRecommendations']:
+            search = functions.youtube_searchGOOD(track)
+        else:
+            search = functions.youtube_search(track)
 
         queue.append(search[0])
         queue_title.append(search[1])
-
-    await ctx.send("Queued "+str(len(tracks))+" tracks")
-
 
 
 @client.command()

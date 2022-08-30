@@ -13,5 +13,6 @@
     "AloneTime": 120,
     "queueMode": "none",
     "MaxCacheAge": 0,
-    "ffmpegWait": 0.75
+    "ffmpegWait": 0.75,
+    "UseYTAPIforRecommendations": false
 }
