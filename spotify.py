@@ -5,7 +5,7 @@ import logging
 def _getToken():
     AUTH_URL = 'https://accounts.spotify.com/api/token'
 
-    with open('token.json', 'r') as f:
+    with open('./config/token.json', 'r') as f:
         token = json.load(f)
 
     auth_response = requests.post(AUTH_URL, {
