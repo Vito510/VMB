@@ -1,5 +1,4 @@
-push.bash
-token.json
-packs.json
-test.py
-test2.py
+config
+packs
+cache
+.vscode
