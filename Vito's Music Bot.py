@@ -17,6 +17,7 @@ import cache
 import functions
 import pack
 import spotify
+import youtubeAPI
 
 #from youtube_dl import YoutubeDL
 
@@ -405,7 +406,7 @@ class Media_Controls(commands.Cog):
 
         if t == 1:
             #PLaylist
-            playlist = functions.list_from_playlist(search)
+            playlist = youtubeAPI.playlist(search)
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
             await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
@@ -439,7 +440,7 @@ class Media_Controls(commands.Cog):
         else:
 
             if configuration["UseYoutubeSearchAPI"]:
-                search = functions.youtube_searchGOOD(search)
+                search = youtubeAPI.search(search)
             else:
                 search = functions.youtube_search(search)
 
@@ -557,8 +558,8 @@ def getRecommendations(tracks):
     for track in tracks:
         #Biggest bottleneck ever, might switch to last.fm API but then I will have to mess with the musicbrainz API
         
-        if configuration['UseYTAPIforRecommendations']:
-            search = functions.youtube_searchGOOD(track)
+        if configuration['UseYT_APIforRecommendations']:
+            search = youtubeAPI.search(track)
         else:
             search = functions.youtube_search(track)
 

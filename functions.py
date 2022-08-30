@@ -4,16 +4,12 @@ import logging
 import os
 import re
 import time
-from urllib.parse import parse_qs, urlparse
-from html import unescape
 import click
-import googleapiclient.discovery
+
 import youtube_dl
 from youtube_search import YoutubeSearch
 
 import cache
-
-youtube = googleapiclient.discovery.build("youtube", "v3", developerKey = "AIzaSyBUnRYlLX6xXinu9plpwpvZOg9_rv-i040")
 
 with open('config.json') as f:
     configuration = json.load(f)
@@ -111,45 +107,6 @@ def youtube_search(search):
     
     return [search_url,search_title]
 
-def youtube_searchGOOD(search):
-    '''Youtube search function from Youtube API v3'''
-    global search_url,search_title
-
-    start_time = time.time()
-
-    c = cache.load(search,0)
-
-    if c == None:
-
-        request = youtube.search().list(
-                part="snippet",
-                maxResults=1,
-                q=search
-            )
-
-        try:
-            response = request.execute()
-        except Exception as e:
-            logging.error("Youtube API v3 Error - falling back to youtube_search() - "+str(e))
-
-            return youtube_search(search)
-
-        if len(response["items"]) == 0:
-            logging.info("No results found")
-            return None
-
-        search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
-        search_title = unescape(response['items'][0]['snippet']['title'])
-        cache.save(search,search_url,search_title,0)
-    else:
-        search_url = c['url']
-        search_title = unescape(c['title'])
-
-    t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
-
-    return [search_url,search_title]
-
 def generate_dir_list(dir):
     list_str = ""
     list_list = os.listdir(dir)
@@ -160,57 +117,6 @@ def generate_dir_list(dir):
         f.write(list_str)
     
     return 'cache/local_files_queue.txt'
-
-def list_from_playlist(url):
-    start_time = time.time()
-
-    query = parse_qs(urlparse(url).query, keep_blank_values=True)
-    playlist_id = query["list"][0]
-
-    c = cache.load(playlist_id,1)
-
-    if c == None:
-        list = []
-
-        request = youtube.playlistItems().list(
-            part = "snippet",
-            playlistId = playlist_id,
-            maxResults = 1
-        )
-
-        try:
-            response = request.execute()
-        except Exception as e:
-            logging.error("Error in request - "+str(e))
-
-            return []
-
-        playlist_items = []
-        while request is not None:
-            response = request.execute()
-            playlist_items += response["items"]
-            request = youtube.playlistItems().list_next(request, response)
-        
-        for t in playlist_items:
-            list.append('https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"])
-        urls = list
-        list = []
-        for t in playlist_items:
-            list.append(t["snippet"]["title"])
-
-        titles = list
-
-        cache.save(playlist_id,urls,titles,1)
-    else:
-        urls = c['url']
-        titles = c['title']
-
-
-    t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
-
-
-    return [urls,titles]
 
 def create():
     """Creates all the files/folders the bot needs"""
