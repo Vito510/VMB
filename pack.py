@@ -20,7 +20,8 @@ def pick(mode):
 
 
 def select():
-    x = json.load(open('packs.json','r',encoding='utf-8'))
+    x = json.load(open('./config/config.json','r',encoding='utf-8'))
+    x = x['packs']
     total = 0
     for i in x:
         total += i['weight']

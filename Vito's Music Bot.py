@@ -21,9 +21,6 @@ import youtubeAPI
 
 #from youtube_dl import YoutubeDL
 
-functions.create()
-
-
 bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
 
 x = datetime.datetime.now()
@@ -39,29 +36,11 @@ logging.basicConfig(
     )
 
 
-with open('config.json') as f:
+with open('./config/config.json') as f:
     configuration = json.load(f)
 
-ytdl_format_options = {
-    'format': 'bestaudio',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
-}
 
-ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
-    'options': '-vn -v quiet'
-}
-
-if 'quiet' in ffmpeg_options['options']:
+if 'quiet' in configuration['ffmpeg_options']:
     click.secho('ffmpeg quiet mode enabled',fg='red',bg='black')
 
 if configuration['MaxCacheAge'] != 0: cache.clear(configuration['MaxCacheAge'])
@@ -72,7 +51,7 @@ intents.presences = True
 
 queueMode = configuration["queueMode"]
 client = commands.Bot(command_prefix='Vito ', intents=intents)
-ytdl = YoutubeDL(ytdl_format_options)
+ytdl = YoutubeDL(configuration['ytdl_format_options'])
 Stop = False
 FirstTimeSetup = True
 path = str("D:/Music/FLAC_baby!!!")     #Default path
@@ -119,7 +98,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
 
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+        return cls(discord.FFmpegPCMAudio(filename, **configuration['ffmpeg_options']), data=data)
 
 def to_thread(func: typing.Callable) -> typing.Coroutine:
     @functools.wraps(func)
@@ -392,7 +371,10 @@ class Media_Controls(commands.Cog):
 
     @commands.command()
     async def yt(self, ctx):
-        await ctx.send(file=discord.File('packs/cb3.png'))
+        try:
+            await ctx.send(file=discord.File('packs/cb3.png'))
+        except:
+            pass
         await ctx.send('Of course, there still is YouTube support, but the yt command has been replaced with the play command')
 
 

@@ -11,24 +11,11 @@ from youtube_search import YoutubeSearch
 
 import cache
 
-with open('config.json') as f:
+with open('./config/config.json') as f:
     configuration = json.load(f)
 
-ytdl_format_options = {
-    'format': 'bestaudio/best',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
-}
 
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+ytdl = youtube_dl.YoutubeDL(configuration['ytdl_format_options'])
 
 def timestamp():
     now = datetime.datetime.now()
@@ -117,54 +104,3 @@ def generate_dir_list(dir):
         f.write(list_str)
     
     return 'cache/local_files_queue.txt'
-
-def create():
-    """Creates all the files/folders the bot needs"""
-    if not os.path.isdir('cache'):
-        logging.info("Creating cache folder")
-
-        os.mkdir('cache')
-
-        stuff = ['playlist.json','search.json','url.json']
-
-        for i in stuff:
-            with open('cache/'+i, "w") as f:
-                f.write("{}")   
-
-    if not os.path.isdir('logs'):
-        logging.info("Creating logs folder")
-
-        os.mkdir('logs')
-    
-    if not os.path.isdir('packs'):
-        logging.info("Creating packs folder")
-
-        os.mkdir('packs')
-
-        with open('packs/example_I.txt', 'w') as f:
-            f.write("Hello World!\nHello Again!")
-
-        with open('packs/example_O.txt', 'w') as f:
-            f.write("Bye!\nGoodbye!")
-
-        with open('packs/example2_O.txt', 'w') as f:
-            f.write("Don't now what to say!\nFunny?")
-
-        
-
-    if not os.path.isfile('packs.json'):
-        logging.info("Creating packs.json")
-
-        with open('packs.json', 'w') as f:
-            x = [{'name':'example','type':'IO','weight':0.5,'dir':'packs/example'},
-                 {'name':'example2','type':'O','weight':0.5,'dir':'packs/example2'}]
-            json.dump(x, f, indent=4)
-
-    if not os.path.isfile('token.json'):
-        logging.info("Creating token.json")
-
-        with open('token.json', 'w') as f:
-            json.dump({'token':'YOUR_TOKEN','token_debug':'SECONDARY_TOKEN_FOR_DEBUG'}, f, indent=4)
-
-        click.echo("Put your token in token.json")
-        exit()
