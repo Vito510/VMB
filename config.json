@@ -1,6 +1,5 @@
 {
     "UseYoutubeSearchAPI": true,
-    "EnableCacheing": false,
     "JoinLeaveMessages": true,
     "AllowHostLocalFiles": false,
     "EnableTestCommands": false,
@@ -14,5 +13,5 @@
     "queueMode": "none",
     "MaxCacheAge": 0,
     "ffmpegWait": 0.75,
-    "UseYTAPIforRecommendations": false
+    "UseYT_APIforRecommendations": false
 }
