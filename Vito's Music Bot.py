@@ -57,7 +57,7 @@ ytdl_format_options = {
 
 ffmpeg_options = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
-    'options': '-vn -v quiet'
+    'options': '-vn -v verbose'
 }
 
 if 'quiet' in ffmpeg_options['options']:
@@ -383,14 +383,11 @@ class Media_Controls(commands.Cog):
         global queue_index
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        print(queue_index,len(queue))
+
         if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            await Media_Controls.jump(self,ctx,number=queue_index-1)
- 
-            logging.info("playing previous track: "+str(queue_index))
-            ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
+            await Media_Controls.jump(self,ctx,number=queue_index-2)
 
     @commands.command()
     async def yt(self, ctx):
