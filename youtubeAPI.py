@@ -5,15 +5,20 @@ from html import unescape
 from urllib.parse import parse_qs, urlparse
 
 import googleapiclient.discovery
+import click
 
 import cache
 import functions
 
 
-with open('token.json', 'r') as f:
+with open('./config/token.json', 'r') as f:
     token = json.load(f)
 
-youtube = googleapiclient.discovery.build("youtube", "v3", developerKey = token['youtube_data_API_v3_key'])
+if token['youtube_data_API_v3_key'] != '':
+    youtube = googleapiclient.discovery.build("youtube", "v3", developerKey = token['youtube_data_API_v3_key'])
+else:
+    click.secho('No YouTube data API v3 key: search will use slower method, playlist importing will not work',fg='yellow')
+
 
 
 def search(search):
@@ -26,13 +31,14 @@ def search(search):
 
     if c == None:
 
-        request = youtube.search().list(
+        try:
+            request = youtube.search().list(
                 part="snippet",
                 maxResults=1,
                 q=search
             )
 
-        try:
+
             response = request.execute()
         except Exception as e:
             logging.error("Youtube API v3 Error - falling back to youtube_search() - "+str(e))
@@ -67,11 +73,15 @@ def playlist(url):
     if c == None:
         list = []
 
-        request = youtube.playlistItems().list(
-            part = "snippet",
-            playlistId = playlist_id,
-            maxResults = 1
-        )
+        try:
+            request = youtube.playlistItems().list(
+                part = "snippet",
+                playlistId = playlist_id,
+                maxResults = 1
+            )
+        except:
+            logging.error('To use playlist import add a YouTube API v3 key')
+            return None
 
         try:
             response = request.execute()

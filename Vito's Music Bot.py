@@ -40,9 +40,6 @@ with open('./config/config.json') as f:
     configuration = json.load(f)
 
 
-if 'quiet' in configuration['ffmpeg_options']:
-    click.secho('ffmpeg quiet mode enabled',fg='red',bg='black')
-
 if configuration['MaxCacheAge'] != 0: cache.clear(configuration['MaxCacheAge'])
 
 intents = discord.Intents.all()
@@ -389,6 +386,11 @@ class Media_Controls(commands.Cog):
         if t == 1:
             #PLaylist
             playlist = youtubeAPI.playlist(search)
+
+            if playlist is None: 
+                await ctx.send("Error, view console for more info")
+                return
+
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
             await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
@@ -611,8 +613,12 @@ async def on_ready():
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
 
-with open('token.json', 'r') as f:
+with open('./config/token.json', 'r') as f:
     token = json.load(f)
+
+if token['token'] == 'DISCORD_BOT_TOKEN':
+    click.secho('Add your discord bot token in ./config/token.json',fg='red')
+    exit()
 
 if '--debug' in sys.argv:
     click.secho("debugMode is enabled",fg="yellow")

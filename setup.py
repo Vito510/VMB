@@ -1,12 +1,15 @@
 # Required:
 #     logs folder
 #     cache folder
+#           playlist.json
+#           search.json
+#           url.json     
 #     packs folder
-#         example/default packs
+#           example/default packs
 #     config folder:
-#         config.json
-#         packs.json
-#         token.json
+#           config.json
+#           packs.json
+#           token.json
 import os
 import json
 
@@ -28,6 +31,21 @@ for folder in folders:
             pass
         finally:
             print('Created '+folder+' folder')
+
+
+#cache files
+
+files = ['playlist','search','url']
+
+for file in files:
+    if os.path.exists('./cache/'+file+'.json'):
+        x = input('There is already a {}.json file, overwrite[y/n]? '.format(file))
+        if x != 'y' or x != 'Y':
+            continue
+
+    with open('./cache/'+file+'.json', 'w') as f:
+        json.dump({}, f, indent=4)
+
 
 # example packs
 
