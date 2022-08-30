@@ -45,8 +45,7 @@ def get_age_in_days(data):
     return age_in_days
 
 def save(x,url,title,t):
-    click.echo(timestamp()+"cache.save() - Writing to cache")
-    logging.info("cache.save() - Writing to cache")
+    logging.info("Writing to cache")
 
     d = {}
 
@@ -85,8 +84,7 @@ def load(x,t):
     with open(path) as f:
         data = json.load(f)
         if x in data:
-            click.echo(timestamp()+"cache.load() - Reading from cache")
-            logging.info("cache.load() - Reading from cache")
+            logging.info("Reading from cache")
             return data[x]
         else:
             return None

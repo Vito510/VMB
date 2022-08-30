@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import random
+import functools
+import typing
 import sys
 
 import click
@@ -14,46 +16,42 @@ from yt_dlp import YoutubeDL
 import cache
 import functions
 import pack
+import spotify
+import youtubeAPI
 
 #from youtube_dl import YoutubeDL
-
 
 bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
 
 x = datetime.datetime.now()
-logging.basicConfig(filename='./logs/{}.log'.format(x.strftime("%d-%m-%Y %H-%M-%S")),format='[%(levelname)s] [%(asctime)s] - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format= u'\x1b[30;1m%(asctime)s \x1B[1m\x1B[34m%(levelname)-8s \x1B[0m\x1B[35m%(module)s.%(funcName)s \x1B[0m%(message)s' 
+    if discord.utils.stream_supports_colour(sys.stdout) else u'[%(asctime)s] [%(levelname)-8s] %(module)s.%(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler('./logs/{}.log'.format(x.strftime("%d-%m-%Y %H-%M-%S"))),
+        logging.StreamHandler(stream=sys.stdout)
+    ]
+    )
 
-with open('config.json') as f:
+
+with open('./config/config.json') as f:
     configuration = json.load(f)
 
 
-ytdl_format_options = {
-    'format': 'bestaudio',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
-}
-
-ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
-    'options': '-vn -v quiet'
-}
-
-if 'quiet' in ffmpeg_options['options']:
+if 'quiet' in configuration['ffmpeg_options']:
     click.secho('ffmpeg quiet mode enabled',fg='red',bg='black')
 
 if configuration['MaxCacheAge'] != 0: cache.clear(configuration['MaxCacheAge'])
 
+intents = discord.Intents.all()
+intents.members = True
+intents.presences = True
+
 queueMode = configuration["queueMode"]
-client = commands.Bot(command_prefix='Vito ')
-ytdl = YoutubeDL(ytdl_format_options)
+client = commands.Bot(command_prefix='Vito ', intents=intents)
+ytdl = YoutubeDL(configuration['ytdl_format_options'])
 Stop = False
 FirstTimeSetup = True
 path = str("D:/Music/FLAC_baby!!!")     #Default path
@@ -62,13 +60,8 @@ queue_title = []
 queue_index = int(0)
 playlist = []
 
-intents = discord.Intents.default()
-intents.members = True
-intents.presences = True
-
-
 class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
+    def __init__(self, source, *, data, volume=1):
         super().__init__(source, volume)
 
         self.data = data
@@ -77,11 +70,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
         self.url = data.get('url')
 
     @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False):
+    async def from_url(cls, url, *, loop=None, stream=True):
         global filename,queue,queue_title,queue_index,Stop,FirstTimeSetup
 
         try:
-            data = ytdl.extract_info(url, download=not stream)
+            data = ytdl.extract_info(url, download=False)
         except Exception as e:
             click.echo(str(e))
             logging.error(str(e))
@@ -104,8 +97,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = data['entries'][0]
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
+        return cls(discord.FFmpegPCMAudio(filename, **configuration['ffmpeg_options']), data=data)
+
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 async def play_next(ctx):
     global Stop,queue_index,filename,msg,FirstTimeSetup, queueMode
@@ -113,8 +112,7 @@ async def play_next(ctx):
         return 0
 
     if ctx.voice_client is None:
-        click.secho(functions.timestamp()+"play_next() - ctx.voice_client is None, stoping playback",fg="yellow")
-        logging.warning("play_next() - ctx.voice_client is None, stoping playback")
+        logging.warning("ctx.voice_client is None, stoping playback")
         FirstTimeSetup = True
         Stop = True
         return 0
@@ -122,7 +120,7 @@ async def play_next(ctx):
 
     if queue_index < len(queue):
         if functions.queue_type(queue[queue_index]) == 0: 
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]))                               #local music source
+            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]), 1)                               #local music source
         else: 
             source = await YTDLSource.from_url(queue[queue_index], loop=client.loop, stream=True)                           #online music source
             await asyncio.sleep(configuration['ffmpegWait'])                                                                #wait for ffmpeg to start
@@ -140,8 +138,7 @@ async def play_next(ctx):
                 queue_index += 1
 
         except Exception as e:
-            click.secho(functions.timestamp()+"play_next() - play error: "+str(e),fg="red")
-            logging.error("play_next() - play error: "+str(e))
+            logging.error("play error: "+str(e))
             queue_index = queue_index + 1                                                                                   #move to next song in list (on error)
             await play_next(ctx)
 
@@ -160,17 +157,21 @@ async def check_if_connected_and_connect(ctx):
     if ctx.voice_client is None:
         try:
             channel = ctx.author.voice.channel
-            click.echo(functions.timestamp()+"check_if_connected_and_connect() - bot not connected to a channel, auto connecting - channel: "+str(channel))
-            logging.info("check_if_connected_and_connect() - bot not connected to a channel, auto connecting - channel: "+str(channel))
+
+            logging.info("bot not connected to a channel, auto connecting - channel: "+str(channel))
 
             await channel.connect()
 
             if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
 
             return True
-        except:
+        except discord.errors.ClientException:
             await ctx.send("You have to be connected to a voice channel")
             return False
+        except Exception as e:
+            logging.error(str(e))
+            return False
+    
 
 class Folder_Exploration(commands.Cog):
     """Folder exploration"""
@@ -239,7 +240,9 @@ class Folder_Exploration(commands.Cog):
     async def list(self, ctx):
         """Lists all files in the current album/directory"""
         click.secho(functions.timestamp()+"list() - sending list",fg="green")
-        await ctx.send(file=discord.File(functions.generate_dir_list(path)))
+        file = functions.generate_dir_list(path)
+        await ctx.send(file=discord.File(file))
+        os.remove(file)
 
     @commands.command()
     async def folder(self, ctx, *, directory):
@@ -266,8 +269,7 @@ class Media_Controls(commands.Cog):
         if await check_if_connected_and_connect(ctx) == False: return 0
         try:
             ctx.voice_client.pause()
-            click.secho(functions.timestamp()+"pause() - Paused music playback",fg="green")
-            logging.info("pause() - Paused music playback")
+            logging.info("Paused music playback")
 
             await ctx.send("Paused music playback")
         except:
@@ -279,8 +281,7 @@ class Media_Controls(commands.Cog):
         if await check_if_connected_and_connect(ctx) == False: return 0
         try:
             ctx.voice_client.resume()
-            click.secho(functions.timestamp()+"resume() - resumed music playback",fg="green")
-            logging.info("resume() - resumed music playback")
+            logging.info("resumed music playback")
             await ctx.send("Resumed music playback")
         except:
             await ctx.send("Music is not paused")
@@ -304,8 +305,7 @@ class Media_Controls(commands.Cog):
 
         Stop = True
         FirstTimeSetup = True
-        click.secho(functions.timestamp()+"fuck() - stoping",fg="red")
-        logging.info("fuck() - stoping")
+        logging.info("stoping")
 
         ctx.voice_client.stop()
         await ctx.send("I hope it's fixed")
@@ -340,8 +340,7 @@ class Media_Controls(commands.Cog):
         if len(queue)*-1 <= number < len(queue):
             if number < 0: number = len(queue)+number
             queue_index = number
-            if not s: click.secho(functions.timestamp()+"jump() - jumping to track: "+str(number),fg="green")
-            logging.info("jump() - jumping to track: "+str(number))
+            logging.info("jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
         else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
 
@@ -356,8 +355,7 @@ class Media_Controls(commands.Cog):
         if FirstTimeSetup == True: 
             await ctx.send("Shit must be playing first before you can skip")
         else:
-            if not s: click.secho(functions.timestamp()+"skip() - skiping to track: "+str(queue_index),fg="green")
-            logging.info("skip() - skiping to track: "+str(queue_index))
+            logging.info("skiping to track: "+str(queue_index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
 
     @commands.command(aliases=["b"])
@@ -365,19 +363,18 @@ class Media_Controls(commands.Cog):
         global queue_index
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        print(queue_index,len(queue))
+
         if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            await Media_Controls.jump(self,ctx,number=queue_index-1)
- 
-            if not s: click.secho(functions.timestamp()+"back() - playing previous track: "+str(queue_index),fg="green")
-            logging.info("back() - playing previous track: "+str(queue_index))
-            ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
+            await Media_Controls.jump(self,ctx,number=queue_index-2)
 
     @commands.command()
     async def yt(self, ctx):
-        await ctx.send(file=discord.File('packs/cb3.png'))
+        try:
+            await ctx.send(file=discord.File('packs/cb3.png'))
+        except:
+            pass
         await ctx.send('Of course, there still is YouTube support, but the yt command has been replaced with the play command')
 
 
@@ -391,7 +388,7 @@ class Media_Controls(commands.Cog):
 
         if t == 1:
             #PLaylist
-            playlist = functions.list_from_playlist(search)
+            playlist = youtubeAPI.playlist(search)
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
             await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
@@ -425,7 +422,7 @@ class Media_Controls(commands.Cog):
         else:
 
             if configuration["UseYoutubeSearchAPI"]:
-                search = functions.youtube_searchGOOD(search)
+                search = youtubeAPI.search(search)
             else:
                 search = functions.youtube_search(search)
 
@@ -460,6 +457,7 @@ class Media_Controls(commands.Cog):
                     f.write('{}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
 
         await ctx.send(file=discord.File('cache/queue.txt'))
+        os.remove("cache/queue.txt")
 
     @commands.command(aliases=["del","remove"])
     async def delete(self, ctx, integer):
@@ -483,8 +481,7 @@ class Media_Controls(commands.Cog):
         queue_index = int(0)
         FirstTimeSetup = True
 
-        click.echo(functions.timestamp()+"clear() - cleared")
-        logging.info("clear() - cleared")
+        logging.info("cleared")
 
     @commands.command()
     async def loop(self, ctx):
@@ -492,14 +489,12 @@ class Media_Controls(commands.Cog):
         global queueMode
         if queueMode == "loop":
             queueMode = "none"
-            click.secho(functions.timestamp()+"loop() - looping disabled",fg="green")
-            logging.info("loop() - looping disabled")
+            logging.info("looping disabled")
 
             await ctx.send("Looping disabled")
         else:
             queueMode = "loop"
-            click.secho(functions.timestamp()+"loop() - looping enabled",fg="green")
-            logging.info("loop() - looping enabled")
+            logging.info("looping enabled")
 
             await ctx.send("Looping the queue")
 
@@ -516,8 +511,7 @@ class Media_Controls(commands.Cog):
         await ctx.voice_client.disconnect()
         Stop = True
         FirstTimeSetup = True
-        click.secho(functions.timestamp()+"stop() - stoping",fg="red")
-        logging.info("stop() - stoping")
+        logging.info("stoping")
         await asyncio.sleep(0.5)
         exit()  
           
@@ -530,9 +524,29 @@ async def clear_cache(ctx):
     for item in os.listdir("cache/playlist"):
         os.remove("cache/playlist/"+item)
     
-    click.secho(functions.timestamp()+"clear_cache() - cleared",fg="green")
-    logging.info("clear_cache() - cleared")
+    logging.info("cleared")
     await ctx.send("Cleared cache")
+
+@client.command()
+async def recommend(ctx,limit=10):
+    """Adds similar tracks"""
+    tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
+
+    await getRecommendations(tracks)
+    await ctx.send("Queued "+str(len(tracks))+" tracks")
+
+@to_thread
+def getRecommendations(tracks):
+    for track in tracks:
+        #Biggest bottleneck ever, might switch to last.fm API but then I will have to mess with the musicbrainz API
+        
+        if configuration['UseYT_APIforRecommendations']:
+            search = youtubeAPI.search(track)
+        else:
+            search = functions.youtube_search(track)
+
+        queue.append(search[0])
+        queue_title.append(search[1])
 
 
 @client.command()
@@ -545,10 +559,10 @@ async def leave(ctx):
     global loopMode
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
-    loopMode = configuration["LoopMode"]
+    loopMode = configuration["queueMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
-
+    
 
 @client.event
 async def on_voice_state_update(member,before,after):
@@ -558,8 +572,7 @@ async def on_voice_state_update(member,before,after):
 
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
             # disconnect if the bot is the only one in the voice channel
-            click.echo(functions.timestamp()+"on_voice_state_update() - Bot is alone disconnecting in {} seconds".format(configuration["AloneTime"]))
-            logging.info("on_voice_state_update() - Bot is alone disconnecting in {} seconds".format(configuration["AloneTime"]))
+            logging.info("Bot is alone disconnecting in {} seconds".format(configuration["AloneTime"]))
             await asyncio.sleep(configuration["AloneTime"])
         else:
             return 0
@@ -567,40 +580,36 @@ async def on_voice_state_update(member,before,after):
         vc = client.get_channel(before.channel.id)
 
         if client.user.id in vc.voice_states and len(vc.voice_states) == 1:
+            guild = client.get_guild(before.channel.guild.id)
+            guild.voice_client.stop()
+
             await member.guild.voice_client.disconnect()
             Stop = True
-            loopMode = configuration["LoopMode"]
+            loopMode = configuration["queueMode"]
             queue = []
             queue_title = []
             queue_index = int(0)
             FirstTimeSetup = True
-            click.secho(functions.timestamp()+"on_voice_state_update() - disconnected",fg="green")
-            logging.info("on_voice_state_update() - disconnected")
+            logging.info("disconnected")
         else:
-            click.secho(functions.timestamp()+"on_voice_state_update() - disconnect canceled",fg="yellow")
-            logging.info("on_voice_state_update() - disconnect canceled")
+            logging.info("disconnect canceled")
 
     else:
         return 0
 
 @client.event
 async def on_ready():
-    click.secho(functions.timestamp()+'Logged in as {0} ({0.id}) -Version 46'.format(client.user),fg="green")
-
+    await client.add_cog(Media_Controls(client))
     logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
 
     await client.change_presence(activity=discord.Game(name="with your mother"))
-    click.echo(json.dumps(configuration,indent=4))
-
-    logging.info('Configuration:\n'+json.dumps(configuration,indent=4))
-
-    click.echo('----------------------------------------------- :)')
+    #logging.info('Configuration:\n'+json.dumps(configuration,indent=4))
 
 
-client.add_cog(Media_Controls(client))
+
+
 if configuration["AllowHostLocalFiles"]: client.add_cog(Folder_Exploration(client))
 #if configuration["EnableTestCommands"]: client.add_cog(Test_Commands(client))
-
 
 with open('token.json', 'r') as f:
     token = json.load(f)
