@@ -4,7 +4,10 @@ import logging
 import os
 import re
 import time
-import click
+import threading
+import functools
+import asyncio
+import typing
 
 import youtube_dl
 from youtube_search import YoutubeSearch
@@ -16,6 +19,12 @@ with open('./config/config.json') as f:
 
 
 ytdl = youtube_dl.YoutubeDL(configuration['ytdl_format_options'])
+
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 def timestamp():
     now = datetime.datetime.now()
@@ -46,6 +55,8 @@ def play_type(x):
         return 1
     elif 'youtube.com/watch' in x:
         return 0
+    elif 'spotify.com/playlist' in x:
+        return 3
     elif 'http' in x[:4]:
         return 2
     else:
@@ -93,6 +104,39 @@ def youtube_search(search):
     logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
     
     return [search_url,search_title]
+
+@to_thread
+def youtube_search_thread(searches):
+    """Threaded YouTube search ([url,title])"""
+
+    result = [None] * len(searches)
+    threads = [None] * len(searches)
+
+    def search(search, result, index):
+        r = json.loads(YoutubeSearch(search, max_results=1).to_json())
+
+        search_url = "https://www.youtube.com/watch?v="+r["videos"][0:][0]['id']
+        search_title = r["videos"][0:][0]["title"]
+
+        result[index] = (search_url,search_title)
+
+    logging.info('Running on {} threads'.format(len(searches)))
+    for i in range(len(threads)):
+        threads[i] = threading.Thread(target=search, args=(searches[i], result, i))
+        threads[i].start()
+
+    for i in range(len(threads)):
+        threads[i].join()
+
+    urls = []
+    titles = []
+
+    for item in result:
+        urls.append(item[0])
+        titles.append(item[1])
+
+    return (urls,titles)
+
 
 def generate_dir_list(dir):
     list_str = ""

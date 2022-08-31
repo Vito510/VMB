@@ -2,6 +2,7 @@ import json
 import logging
 import time
 from html import unescape
+import requests
 from urllib.parse import parse_qs, urlparse
 
 import googleapiclient.discovery
@@ -18,7 +19,6 @@ if token['youtube_data_API_v3_key'] != '':
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey = token['youtube_data_API_v3_key'])
 else:
     click.secho('No YouTube data API v3 key: search will use slower method, playlist importing will not work',fg='yellow')
-
 
 
 def search(search):
@@ -114,5 +114,41 @@ def playlist(url):
     t = str(round((time.time()-start_time)*1000))+'ms'
     logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
 
+
+    return [urls,titles]
+
+def related(url,amount=10):
+    '''Returns related music videos'''
+
+    if 'youtube' in url:
+        url = url.split('watch?v=')[-1]
+    else:
+        return None
+
+
+    URL = 'https://youtube.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={}&maxResults={}&type=video&key={}&topicId=%2Fm%2F04rlf'.format(url,amount,token['youtube_data_API_v3_key'])
+    data = requests.get(URL)
+
+    if data.status_code != 200:
+        logging.error('Error in request: '+str(data))
+        raise 'Error in request'
+
+
+    d = json.loads(data.text)
+    urls = []
+    titles = []
+
+
+    for item in d['items']:
+        url = 'https://www.youtube.com/watch?v='+item['id']['videoId']
+
+        try:
+            title = item['snippet']['title']
+        except:
+            #some results are deleted videos they keep id's but dont contain snippets
+            continue
+
+        urls.append(url)
+        titles.append(title)
 
     return [urls,titles]

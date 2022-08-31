@@ -4,8 +4,6 @@ import json
 import logging
 import os
 import random
-import functools
-import typing
 import sys
 
 import click
@@ -97,11 +95,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         return cls(discord.FFmpegPCMAudio(filename, **configuration['ffmpeg_options']), data=data)
 
-def to_thread(func: typing.Callable) -> typing.Coroutine:
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        return await asyncio.to_thread(func, *args, **kwargs)
-    return wrapper
 
 async def play_next(ctx):
     global Stop,queue_index,filename,msg,FirstTimeSetup, queueMode
@@ -421,6 +414,17 @@ class Media_Controls(commands.Cog):
             queue_title.append(search)
             queue.append(search)
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+search)
+        elif t == 3:
+            #Spotify playlist
+            tracks = spotify.playlist(search)
+
+            await ctx.send('**[Spotify]** Converting tracks this may take a bit')
+            #convert to yt
+            tracks = await functions.youtube_search_thread(tracks)
+
+            queue.extend(tracks[0])
+            queue_title.extend(tracks[1])
+            await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
         else:
 
             if configuration["UseYoutubeSearchAPI"]:
@@ -530,25 +534,33 @@ async def clear_cache(ctx):
     await ctx.send("Cleared cache")
 
 @client.command()
-async def recommend(ctx,limit=10):
+async def recommend(ctx,* x):
     """Adds similar tracks"""
-    tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
+    for item in x:
+        try:
+            limit = int(item)
+        except:
+            pass
 
-    await getRecommendations(tracks)
-    await ctx.send("Queued "+str(len(tracks))+" tracks")
+    if '-yt' in x:
+        try:
+            tracks = youtubeAPI.related(queue[queue_index-1],amount=limit)
+            queue.extend(tracks[0])
+            queue_title.extend(tracks[1])
 
-@to_thread
-def getRecommendations(tracks):
-    for track in tracks:
-        #Biggest bottleneck ever, might switch to last.fm API but then I will have to mess with the musicbrainz API
+            await ctx.send("**[Youtube]** Queued "+str(len(tracks[0]))+" tracks")
+        except:
+            pass
+    else:
+        tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
+        await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
-        if configuration['UseYT_APIforRecommendations']:
-            search = youtubeAPI.search(track)
-        else:
-            search = functions.youtube_search(track)
+        tracks = functions.youtube_search_thread(tracks)
 
-        queue.append(search[0])
-        queue_title.append(search[1])
+        queue.extend(tracks[0])
+        queue_title.extend(tracks[1])
+
+        await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
 
 
 @client.command()

@@ -58,4 +58,44 @@ def getRecommendation(song_name,limit):
 
     return r
 
+def playlist(url):
+    """Returns artist name and song title of every item in a playlist (artist - title)"""
+
+    url = url.split('playlist/')[-1].split('?')[0]
+
+    left = 1
+    offset = 0
+
+    re = []
+
+    while left > 0:
+
+        access_token = _getToken()
+
+        headers = {
+            'Authorization': 'Bearer {token}'.format(token=access_token)
+        }
+
+        URL = 'https://api.spotify.com/v1/playlists/{}/tracks?offset={}'.format(url,offset)
+        r = requests.get(URL, headers=headers)
+
+
+        data = json.loads(r.text)
+        batch = len(data['items'])
+        total = data['total']
+
+        offset += batch
+        left = total - offset
+
+
+        for item in data['items']:
+            item = item['track']
+            title = item['name']
+            artist = item['artists'][0]['name']
+
+            re.append(artist+' - '+title)
+
+    logging.info('Got: {} items'.format(len(re)))
+
+    return re
 
