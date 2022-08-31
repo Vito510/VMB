@@ -386,7 +386,7 @@ class Media_Controls(commands.Cog):
 
             queue.extend(playlist[0])
             queue_title.extend(playlist[1])
-            await ctx.send("Queued "+str(len(playlist[1]))+" tracks")
+            await ctx.send("**[YouTube]** Queued "+str(len(playlist[1]))+" tracks")
         elif t == 0:
             #YT link
 
@@ -423,7 +423,7 @@ class Media_Controls(commands.Cog):
             if c == None:
                 tracks = spotify.playlist(search)
 
-                await ctx.send('**[Spotify]** Converting tracks this may take a bit')
+                await ctx.send('**[Spotify]** Converting tracks this may kill the bot for a bit')
                 #convert to yt
                 tracks = await functions.youtube_search_thread(tracks)
 
@@ -454,7 +454,7 @@ class Media_Controls(commands.Cog):
             queue.append(search[0])
             queue_title.append(search[1])
             if ctx.voice_client.is_playing() == True: 
-                await ctx.send("Queued: "+search[1])
+                await ctx.send("**[YouTube]** Queued: "+search[1])
 
         if FirstTimeSetup == True:
             Stop = False
@@ -570,7 +570,7 @@ async def recommend(ctx,* x):
         tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
         await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
-        tracks = functions.youtube_search_thread(tracks)
+        tracks = await functions.youtube_search_thread(tracks)
 
         queue.extend(tracks[0])
         queue_title.extend(tracks[1])
@@ -629,7 +629,7 @@ async def on_voice_state_update(member,before,after):
 @client.event
 async def on_ready():
     await client.add_cog(Media_Controls(client))
-    logging.info('Logged in as {0} ({0.id}) -Version 46'.format(client.user))
+    logging.info('Logged in as {0} ({0.id}) -Version 4.7'.format(client.user))
 
     await client.change_presence(activity=discord.Game(name="with your mother"))
     #logging.info('Configuration:\n'+json.dumps(configuration,indent=4))
