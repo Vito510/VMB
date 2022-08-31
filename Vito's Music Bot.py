@@ -416,15 +416,30 @@ class Media_Controls(commands.Cog):
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+search)
         elif t == 3:
             #Spotify playlist
-            tracks = spotify.playlist(search)
+            search = search.split('playlist/')[-1].split('?')[0]
 
-            await ctx.send('**[Spotify]** Converting tracks this may take a bit')
-            #convert to yt
-            tracks = await functions.youtube_search_thread(tracks)
+            c = cache.load(search,1)
 
-            queue.extend(tracks[0])
-            queue_title.extend(tracks[1])
-            await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+            if c == None:
+                tracks = spotify.playlist(search)
+
+                await ctx.send('**[Spotify]** Converting tracks this may take a bit')
+                #convert to yt
+                tracks = await functions.youtube_search_thread(tracks)
+
+                queue.extend(tracks[0])
+                queue_title.extend(tracks[1])
+
+                cache.save(search, tracks[0], tracks[1], 1)
+
+                await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+            else:
+                queue.extend(c['url'])
+                queue_title.extend(c['title'])
+
+                await ctx.send("**[Spotify]** Queued "+str(len(c['url']))+" tracks")
+
+
         else:
 
             if configuration["UseYoutubeSearchAPI"]:
