@@ -485,7 +485,7 @@ class Media_Controls(commands.Cog):
         for item in r:
             with open("cache/queue.md", "w", encoding="utf-8") as f:
                 for i in item:
-                    n = '\n' if count % 100 != 0 else ''
+                    n = '\n' if count-1 % 100 != 0 or count == 0 else ''
                     i = i.replace('\n','')
                     if count == queue_index-1: 
                         f.write('# {}: {}{}'.format(count,i,n))
