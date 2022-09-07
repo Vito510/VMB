@@ -465,19 +465,37 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["queue"])
     async def q(self, ctx):
         """View the queue"""
-        with open("cache/queue.md", "w", encoding="utf-8") as f:
 
-            if len(queue_title) == 0: 
-                await ctx.send("The queue is empty dumbass")
-                return 0
+        if len(queue_title) == 0: 
+            await ctx.send("The queue is empty dumbass")
+            return 0
 
-            for i in range(len(queue_title)):
-                if i == queue_index-1: 
-                    f.write('# {}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
-                else:
-                    f.write('{}: {}\n'.format(i,queue_title[int(i)].replace('\n','')))
+        r = []
 
-        await ctx.send(file=discord.File('cache/queue.md'))
+        limit = 100
+        out = 0
+
+        while out < len(queue_title):
+            y = queue_title[out:limit+out]
+            r.append(y)
+
+            out += len(y)
+
+        count = 0
+        for item in r:
+            with open("cache/queue.md", "w", encoding="utf-8") as f:
+                for i in item:
+                    n = '\n' if count % 100 != 0 else ''
+                    i = i.replace('\n','')
+                    if count == queue_index-1: 
+                        f.write('# {}: {}{}'.format(count,i,n))
+                    else:
+                        f.write('{}: {}{}'.format(count,i,n))
+
+                    count += 1
+
+            await ctx.send(file=discord.File('cache/queue.md'))
+
         os.remove("cache/queue.md")
 
     @commands.command(aliases=["del","remove"])
