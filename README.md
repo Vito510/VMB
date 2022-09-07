@@ -45,7 +45,7 @@ This bot supports audio playback of local audio/video files
 - Clone repository
 
 ```bash
-git clone github.com/Vito510/VMB
+git clone https://github.com/Vito510/VMB
 ```
 
 - run ```setup.py```
