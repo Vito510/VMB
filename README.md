@@ -3,7 +3,7 @@
 
 Vito's music bot is definitely my biggest project to date.
 
-It's another discord music bot BUT it's MINE and I can do with it whatever i want with it.
+It's another discord music bot BUT it's MINE and I can do whatever i want with it.
 
 <h2>Youtube support</h2>
 This bot supports youtube playback and playback of youtube playlists.
@@ -38,4 +38,27 @@ This bot supports youtube playback and playback of youtube playlists.
 <h2>Local file playback</h2>
 
 This bot supports audio playback of local audio/video files
+
+<h1>Installation</h1>
+
+- Install python3+
+- Clone repository
+
+```bash
+git clone github.com/Vito510/VMB
+```
+
+- run ```setup.py```
+- add your discord bot token in ```config/token.json```
+- (Optional) Get a <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank">A Youtube Data API v3 key</a> and put it in ```config/token.json```
+- (Optional) Get a <a href="https://developer.spotify.com/dashboard/applications" target="_blank">A Spotify developer app</a> and put it's **id** and **secret** it in ```config/token.json```
+
+- (Optional) maybe change the bot prefix from "Vito" to something more sane
+
+And thats it now you can run
+```bash
+python Vito\'s\ Music\ Bot.py
+```
+
+
   
