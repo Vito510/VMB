@@ -14,7 +14,7 @@ from yt_dlp import YoutubeDL
 import cache
 import functions
 import pack
-import spotify
+import spotifyAPI
 import youtubeAPI
 
 #from youtube_dl import YoutubeDL
@@ -421,7 +421,7 @@ class Media_Controls(commands.Cog):
             c = cache.load(search,1)
 
             if c == None:
-                tracks = spotify.playlist(search)
+                tracks = spotifyAPI.playlist(search)
 
                 await ctx.send('**[Spotify]** Converting tracks this may kill the bot for a bit')
                 #convert to yt
@@ -567,7 +567,7 @@ async def recommend(ctx,* x):
         except:
             pass
     else:
-        tracks = spotify.getRecommendation(queue_title[queue_index-1],limit)
+        tracks = spotifyAPI.getRecommendation(queue_title[queue_index-1],limit)
         await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
         tracks = await functions.youtube_search_thread(tracks)
