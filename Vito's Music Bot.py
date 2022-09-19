@@ -412,17 +412,24 @@ class Media_Controls(commands.Cog):
             #YT link
 
             c = cache.load(search,2)
+            c = None
 
             if c == None:
-                queue.append(search)
-                title = functions.get_title(search)
-                queue_title.append(title)
 
-                cache.save(search,search,title,2)
+                jsn = [{
+                    "source": search,
+                    "title": functions.get_title(search),
+                }]
+
+                queue.add(jsn, ctx.author.id)
+
+
+                #cache.save(search,search,title,2)
             else:
-                queue.append(c['url'])
-                title = c['title']
-                queue_title.append(title)
+                queue.add([{
+                    "source": c['url'],
+                    "title": c['title']
+                }], ctx.author.id)
 
 
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
@@ -462,6 +469,7 @@ class Media_Controls(commands.Cog):
 
 
         else:
+            #search
 
             if configuration["UseYoutubeSearchAPI"]:
                 search = youtubeAPI.search(search)
