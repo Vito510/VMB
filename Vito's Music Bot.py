@@ -426,21 +426,27 @@ class Media_Controls(commands.Cog):
 
                 #cache.save(search,search,title,2)
             else:
-                queue.add([{
+
+                jsn = [{
                     "source": c['url'],
                     "title": c['title']
-                }], ctx.author.id)
+                }]
+
+                queue.add(jsn, ctx.author.id)
 
 
-            if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
+            if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+jsn[0]['title'])
         elif t == 2:
             #URL
             if functions.is_supported(search) == False:
                 await ctx.send("Unsupported URL")
                 return 0
 
-            queue_title.append(search)
-            queue.append(search)
+            queue.add([{
+                "source": search,
+                "title": search
+            }], ctx.author.id)
+
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+search)
         elif t == 3:
             #Spotify playlist
@@ -455,15 +461,23 @@ class Media_Controls(commands.Cog):
                 #convert to yt
                 tracks = await functions.youtube_search_thread(tracks)
 
-                queue.extend(tracks[0])
-                queue_title.extend(tracks[1])
+                for i in range(tracks[0]):
+                    queue.add([{
+                        "source": tracks[0][i],
+                        "title": tracks[1][i]
+                    }])
 
                 cache.save(search, tracks[0], tracks[1], 1)
 
                 await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
             else:
-                queue.extend(c['url'])
-                queue_title.extend(c['title'])
+                for i in range(len(c['url'])):
+                    jsn.append(
+                        {
+                            "source": c['url'][i],
+                            "title": c['title'][i],
+                        }
+                    )
 
                 await ctx.send("**[Spotify]** Queued "+str(len(c['url']))+" tracks")
 
@@ -480,8 +494,12 @@ class Media_Controls(commands.Cog):
                 await ctx.send("No results found")
                 return 0
 
-            queue.append(search[0])
-            queue_title.append(search[1])
+            queue.add([{
+                "source": search[0],
+                "title": search[1]
+            }],ctx.author.id)
+
+
             if ctx.voice_client.is_playing() == True: 
                 await ctx.send("**[YouTube]** Queued: "+search[1])
 
