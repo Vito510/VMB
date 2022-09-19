@@ -116,7 +116,7 @@ def playlist(url):
 
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
+    logging.info("Got {} items from {} in {}".format(len(jsn),playlist_id,t))
 
 
     return jsn
