@@ -101,8 +101,6 @@ def load(x,t):
 
             return jsn
 
-
-
         else:
             return None
 
