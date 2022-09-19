@@ -23,12 +23,11 @@ else:
 
 def search(search):
     """Returns a youtube video title and a url from a search term"""
-    global search_url,search_title
 
     start_time = time.time()
+    jsn = []
 
     c = cache.load(search,0)
-    c = None
 
     if c == None:
 
@@ -55,13 +54,12 @@ def search(search):
             "title": unescape(response['items'][0]['snippet']['title'])
         }]
 
-        #cache.save(search,search_url,search_title,0)
+        cache.save(search,jsn[0]["source"],jsn[0]["title"],0)
     else:
-        search_url = c['url']
-        search_title = unescape(c['title'])
+        jsn.append(c)
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
+    logging.info("Found: \x1B[4m"+jsn[0]["title"]+"\x1B[0m in "+t)
 
     return jsn
 
@@ -113,14 +111,7 @@ def playlist(url):
 
         cache.save(playlist_id,jsn,1)
     else:
-        for i in range(len(c['url'])):
-            jsn.append(
-                {
-                    "source": c['url'][i],
-                    "title": c['title'][i],
-                    "playlist": url
-                }
-            )
+        jsn.append(c)
 
 
 
