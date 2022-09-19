@@ -55,6 +55,34 @@ queue_title = []
 queue_index = int(0)
 playlist = []
 
+class queue():
+    tracks = [
+        #source
+        #title
+        #added-by
+        #playlist
+    ]
+
+    index = 0
+
+    def add(jsn,added_by,playlist=None):
+        for i in jsn:
+
+            a = {
+                "source": i["source"],
+                "title": i["title"],
+                "added_by": added_by,
+                "playlist": playlist
+            }
+
+            queue.tracks.append(a)
+
+    def now():
+        return [queue.index-1]
+
+
+
+
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=1):
         super().__init__(source, volume)
