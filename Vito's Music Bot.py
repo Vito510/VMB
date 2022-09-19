@@ -66,8 +66,7 @@ class queue():
     def add(jsn,added_by):
         for i in jsn:
             i["added_by"] = added_by
-
-        queue.tracks.append(jsn)
+            queue.tracks.append(i)
 
     def now():
         return [queue.index-1]
@@ -96,9 +95,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
             if len(queue) == 1: 
                 Stop = True
                 FirstTimeSetup = True
-            temp = queue[queue.index].split("=")[-1].replace("\n","")
-            del queue[queue.index]
-            del queue_title[queue.index]
+            temp = queue.tracks[queue.index].split("=")[-1].replace("\n","")
+            del queue.tracks[queue.index]
             click.secho(functions.timestamp()+"{} removed from queue".format(temp),fg="red")
             logging.info('{} removed from queue'.format(temp))
             temp = None
@@ -128,11 +126,12 @@ async def play_next(ctx):
         return 0
 
 
-    if queue.index < len(queue):
-        if functions.queue_type(queue[queue.index]) == 0: 
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue.index]), 1)                               #local music source
+    if queue.index < len(queue.tracks):
+        if functions.queue_type(queue.tracks[queue.index]["source"]) == 0: 
+            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue.tracks[queue.index]["source"]), 1)                               #local music source
         else: 
-            source = await YTDLSource.from_url(queue[queue.index], loop=client.loop, stream=True)                           #online music source
+            print(queue.tracks[queue.index]["source"])
+            source = await YTDLSource.from_url(queue.tracks[queue.index]["source"], loop=client.loop, stream=True)                           #online music source
             await asyncio.sleep(configuration['ffmpegWait'])                                                                #wait for ffmpeg to start
             if source == 0:
                 queue.index += 1
@@ -140,8 +139,8 @@ async def play_next(ctx):
                 return 0
 
         try:
-            if queue.index < len(queue):
-                msg = ('**`'+'Now playing track {}: {}'.format(queue.index,queue_title[queue.index])+'`**')
+            if queue.index < len(queue.tracks):
+                msg = ('**`'+'Now playing track {}: {}'.format(queue.index,queue.tracks[queue.index]["title"])+'`**')
                 if Stop == False: await ctx.send(msg,delete_after=10)       #now playing message
                 ctx.voice_client.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
 
@@ -149,7 +148,7 @@ async def play_next(ctx):
 
         except Exception as e:
             logging.error("play error: "+str(e))
-            queue.index = queue.index + 1                                                                                   #move to next song in list (on error)
+            queue.index += 1                                                                                   #move to next song in list (on error)
             await play_next(ctx)
 
     else:

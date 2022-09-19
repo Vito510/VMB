@@ -99,19 +99,26 @@ def playlist(url):
             playlist_items += response["items"]
             request = youtube.playlistItems().list_next(request, response)
         
+        #still gotta use this until I change cache.save()
+        urls = []
+        titles = []
+
         for t in playlist_items:
             jsn.append(
                 {
                     "source": 'https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"],
                     "title": t["snippet"]["title"],
                     "playlist": url
-                }
-            )
+                })
+
+            urls.append('https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"])
+            titles.append(t["snippet"]["title"])
 
 
-        cache.save(playlist_id,jsn,1)
+        cache.save(playlist_id,urls,titles,1)
     else:
-        jsn.append(c)
+        for i in c:
+            jsn.append(i)
 
 
 
