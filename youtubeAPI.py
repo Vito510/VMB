@@ -149,9 +149,7 @@ def related(url,amount=10):
 
 
     d = json.loads(data.text)
-    urls = []
-    titles = []
-
+    jsn = []
 
     for item in d['items']:
         url = 'https://www.youtube.com/watch?v='+item['id']['videoId']
@@ -162,7 +160,9 @@ def related(url,amount=10):
             #some results are deleted videos they keep id's but dont contain snippets
             continue
 
-        urls.append(url)
-        titles.append(title)
+        jsn.append({
+            "source": url,
+            "title": title,
+        })
 
-    return [urls,titles]
+    return jsn
