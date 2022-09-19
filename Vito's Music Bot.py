@@ -412,7 +412,6 @@ class Media_Controls(commands.Cog):
             #YT link
 
             c = cache.load(search,2)
-            c = None
 
             if c == None:
 
@@ -424,15 +423,9 @@ class Media_Controls(commands.Cog):
                 queue.add(jsn, ctx.author.id)
 
 
-                #cache.save(search,search,title,2)
+                cache.save(search,jsn[0]['url'],jsn[0]["title"],2)
             else:
-
-                jsn = [{
-                    "source": c['url'],
-                    "title": c['title']
-                }]
-
-                queue.add(jsn, ctx.author.id)
+                queue.add(c, ctx.author.id)
 
 
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+jsn[0]['title'])
@@ -465,19 +458,13 @@ class Media_Controls(commands.Cog):
                     queue.add([{
                         "source": tracks[0][i],
                         "title": tracks[1][i]
-                    }])
+                    }], ctx.author.id)
 
                 cache.save(search, tracks[0], tracks[1], 1)
 
                 await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
             else:
-                for i in range(len(c['url'])):
-                    jsn.append(
-                        {
-                            "source": c['url'][i],
-                            "title": c['title'][i],
-                        }
-                    )
+                queue.add(c,ctx.author.id)
 
                 await ctx.send("**[Spotify]** Queued "+str(len(c['url']))+" tracks")
 
