@@ -69,6 +69,7 @@ def playlist(url):
     playlist_id = query["list"][0]
 
     c = cache.load(playlist_id,1)
+    c = None
 
     if c == None:
         list = []
@@ -96,16 +97,19 @@ def playlist(url):
             playlist_items += response["items"]
             request = youtube.playlistItems().list_next(request, response)
         
+        jsn = []
         for t in playlist_items:
-            list.append('https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"])
-        urls = list
-        list = []
-        for t in playlist_items:
-            list.append(t["snippet"]["title"])
+            jsn.append(
+                {
+                    "source": 'https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"],
+                    "title": t["snippet"]["title"],
+                    "playlist": url
+                }
+            )
 
-        titles = list
 
-        cache.save(playlist_id,urls,titles,1)
+        #cache.save(playlist_id,jsn,1)
+        print("cacheing disabled")
     else:
         urls = c['url']
         titles = c['title']
@@ -115,7 +119,7 @@ def playlist(url):
     logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
 
 
-    return [urls,titles]
+    return jsn
 
 def related(url,amount=10):
     '''Returns related music videos'''
