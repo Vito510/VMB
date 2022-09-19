@@ -28,6 +28,7 @@ def search(search):
     start_time = time.time()
 
     c = cache.load(search,0)
+    c = None
 
     if c == None:
 
@@ -49,9 +50,12 @@ def search(search):
             logging.info("No results found")
             return None
 
-        search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
-        search_title = unescape(response['items'][0]['snippet']['title'])
-        cache.save(search,search_url,search_title,0)
+        jsn = [{
+            "source": "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId'],
+            "title": unescape(response['items'][0]['snippet']['title'])
+        }]
+
+        #cache.save(search,search_url,search_title,0)
     else:
         search_url = c['url']
         search_title = unescape(c['title'])
@@ -59,7 +63,7 @@ def search(search):
     t = str(round((time.time()-start_time)*1000))+'ms'
     logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
 
-    return [search_url,search_title]
+    return jsn
 
 def playlist(url):
     """Returns a list of urls from a youtube playlist"""

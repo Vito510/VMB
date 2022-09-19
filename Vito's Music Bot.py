@@ -44,16 +44,13 @@ intents = discord.Intents.all()
 intents.members = True
 intents.presences = True
 
-queueMode = configuration["queueMode"]
+
 client = commands.Bot(command_prefix='Vito ', intents=intents)
 ytdl = YoutubeDL(configuration['ytdl_format_options'])
 Stop = False
 FirstTimeSetup = True
 path = str("D:/Music/FLAC_baby!!!")     #Default path
-queue = []
-queue_title = []
-queue_index = int(0)
-playlist = []
+
 
 class queue():
     tracks = [
@@ -64,18 +61,13 @@ class queue():
     ]
 
     index = 0
+    mode = configuration["queueMode"]
 
-    def add(jsn,added_by,playlist=None):
+    def add(jsn,added_by):
         for i in jsn:
+            i["added_by"] = added_by
 
-            a = {
-                "source": i["source"],
-                "title": i["title"],
-                "added_by": added_by,
-                "playlist": playlist
-            }
-
-            queue.tracks.append(a)
+        queue.tracks.append(jsn)
 
     def now():
         return [queue.index-1]
@@ -94,7 +86,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=True):
-        global filename,queue,queue_title,queue_index,Stop,FirstTimeSetup
+        global filename,queue,Stop,FirstTimeSetup
 
         try:
             data = ytdl.extract_info(url, download=False)
@@ -104,9 +96,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
             if len(queue) == 1: 
                 Stop = True
                 FirstTimeSetup = True
-            temp = queue[queue_index].split("=")[-1].replace("\n","")
-            del queue[queue_index]
-            del queue_title[queue_index]
+            temp = queue[queue.index].split("=")[-1].replace("\n","")
+            del queue[queue.index]
+            del queue_title[queue.index]
             click.secho(functions.timestamp()+"{} removed from queue".format(temp),fg="red")
             logging.info('{} removed from queue'.format(temp))
             temp = None
@@ -125,7 +117,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 
 async def play_next(ctx):
-    global Stop,queue_index,filename,msg,FirstTimeSetup, queueMode
+    global Stop,queue,filename,msg,FirstTimeSetup, queueMode
     if Stop == True:
         return 0
 
@@ -136,34 +128,34 @@ async def play_next(ctx):
         return 0
 
 
-    if queue_index < len(queue):
-        if functions.queue_type(queue[queue_index]) == 0: 
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]), 1)                               #local music source
+    if queue.index < len(queue):
+        if functions.queue_type(queue[queue.index]) == 0: 
+            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue.index]), 1)                               #local music source
         else: 
-            source = await YTDLSource.from_url(queue[queue_index], loop=client.loop, stream=True)                           #online music source
+            source = await YTDLSource.from_url(queue[queue.index], loop=client.loop, stream=True)                           #online music source
             await asyncio.sleep(configuration['ffmpegWait'])                                                                #wait for ffmpeg to start
             if source == 0:
-                queue_index += 1
+                queue.index += 1
                 await play_next(ctx)
                 return 0
 
         try:
-            if queue_index < len(queue):
-                msg = ('**`'+'Now playing track {}: {}'.format(queue_index,queue_title[queue_index])+'`**')
+            if queue.index < len(queue):
+                msg = ('**`'+'Now playing track {}: {}'.format(queue.index,queue_title[queue.index])+'`**')
                 if Stop == False: await ctx.send(msg,delete_after=10)       #now playing message
                 ctx.voice_client.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
 
-                queue_index += 1
+                queue.index += 1
 
         except Exception as e:
             logging.error("play error: "+str(e))
-            queue_index = queue_index + 1                                                                                   #move to next song in list (on error)
+            queue.index = queue.index + 1                                                                                   #move to next song in list (on error)
             await play_next(ctx)
 
     else:
         #print(functions.timestamp()+"play_next() - looping back to start")                                                            #play again from the start of the queue
         if queueMode == "loop":
-            queue_index = 0
+            queue.index = 0
             await play_next(ctx)
         elif queueMode == "none":
             #stop
@@ -308,10 +300,10 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        x = str(queue[queue_index-1])
+        x = str(queue[queue.index-1])
 
         if 'http' not in x:
-            x = str(queue_title[queue_index-1])
+            x = str(queue_title[queue.index-1])
 
         await ctx.send("Currently playing:\n"+x)
 
@@ -345,7 +337,7 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["j"])
     async def jump(self, ctx, *, number,s=False):
         """Jump to certain track using list index"""
-        global queue,queue_index,FirstTimeSetup,Stop
+        global queue,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
         Stop = False
 
@@ -357,7 +349,7 @@ class Media_Controls(commands.Cog):
     
         if len(queue)*-1 <= number < len(queue):
             if number < 0: number = len(queue)+number
-            queue_index = number
+            queue.index = number
             logging.info("jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
         else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
@@ -373,19 +365,19 @@ class Media_Controls(commands.Cog):
         if FirstTimeSetup == True: 
             await ctx.send("Shit must be playing first before you can skip")
         else:
-            logging.info("skiping to track: "+str(queue_index))
+            logging.info("skiping to track: "+str(queue.index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
 
     @commands.command(aliases=["b"])
     async def back(self, ctx,s=False):
-        global queue_index
+        global queue
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
 
         if len(queue) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            await Media_Controls.jump(self,ctx,number=queue_index-2)
+            await Media_Controls.jump(self,ctx,number=queue.index-2)
 
     @commands.command()
     async def yt(self, ctx):
@@ -399,7 +391,7 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["p"])
     async def play(self, ctx, *, search):
         """Plays music, obviously. What did you expect?"""
-        global queue,queue_title,FirstTimeSetup,Stop
+        global queue,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
 
         t = functions.play_type(search)
@@ -412,9 +404,10 @@ class Media_Controls(commands.Cog):
                 await ctx.send("Error, view console for more info")
                 return
 
-            queue.extend(playlist[0])
-            queue_title.extend(playlist[1])
+            queue.add(playlist, ctx.author.id)
             await ctx.send("**[YouTube]** Queued "+str(len(playlist[1]))+" tracks")
+
+
         elif t == 0:
             #YT link
 
@@ -515,7 +508,7 @@ class Media_Controls(commands.Cog):
                 for i in item:
                     n = '\n' if count % 100 != 0 or count-1 == 0 else ''
                     i = i.replace('\n','')
-                    if count == queue_index: 
+                    if count == queue.index: 
                         f.write('# {}: {}{}'.format(count-1,i,n))
                     else:
                         f.write('{}: {}{}'.format(count-1,i,n))
@@ -529,7 +522,7 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["del","remove"])
     async def delete(self, ctx, integer):
         """Delete specific queued track"""
-        if int(queue_index)-1 == int(integer): ctx.voice_client.stop() 
+        if int(queue.index)-1 == int(integer): ctx.voice_client.stop() 
         await ctx.send("Removed: "+queue_title[int(integer)])
         del queue[int(integer)]
         del queue_title[int(integer)]
@@ -537,7 +530,7 @@ class Media_Controls(commands.Cog):
     @commands.command()
     async def clear(self, ctx):
         """Clears the queue"""
-        global queue,queue_title,queue_index,Stop,FirstTimeSetup
+        global queue,Stop,FirstTimeSetup
         if len(queue_title) == 0:
             return None
         if await check_if_connected_and_connect(ctx) == False: return 0
@@ -545,7 +538,7 @@ class Media_Controls(commands.Cog):
         Stop = True
         queue = []
         queue_title = []
-        queue_index = int(0)
+        queue.index = int(0)
         FirstTimeSetup = True
 
         logging.info("cleared")
@@ -605,7 +598,7 @@ async def recommend(ctx,* x):
 
     if '-yt' in x:
         try:
-            tracks = youtubeAPI.related(queue[queue_index-1],amount=limit)
+            tracks = youtubeAPI.related(queue[queue.index-1],amount=limit)
             queue.extend(tracks[0])
             queue_title.extend(tracks[1])
 
@@ -613,7 +606,7 @@ async def recommend(ctx,* x):
         except:
             pass
     else:
-        tracks = spotifyAPI.getRecommendation(queue_title[queue_index-1],limit)
+        tracks = spotifyAPI.getRecommendation(queue_title[queue.index-1],limit)
         await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
         tracks = await functions.youtube_search_thread(tracks)
@@ -641,7 +634,7 @@ async def leave(ctx):
 
 @client.event
 async def on_voice_state_update(member,before,after):
-    global Stop, queue, queue_title, queue_index, FirstTimeSetup, loopMode
+    global Stop, queue, FirstTimeSetup, loopMode
     if before.channel != None:
         vc = client.get_channel(before.channel.id)
 
@@ -663,7 +656,7 @@ async def on_voice_state_update(member,before,after):
             loopMode = configuration["queueMode"]
             queue = []
             queue_title = []
-            queue_index = int(0)
+            queue.index = int(0)
             FirstTimeSetup = True
             logging.info("disconnected")
         else:
