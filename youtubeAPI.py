@@ -72,11 +72,11 @@ def playlist(url):
     query = parse_qs(urlparse(url).query, keep_blank_values=True)
     playlist_id = query["list"][0]
 
+    jsn = []
+
     c = cache.load(playlist_id,1)
-    c = None
 
     if c == None:
-        list = []
 
         try:
             request = youtube.playlistItems().list(
@@ -101,7 +101,6 @@ def playlist(url):
             playlist_items += response["items"]
             request = youtube.playlistItems().list_next(request, response)
         
-        jsn = []
         for t in playlist_items:
             jsn.append(
                 {
@@ -112,11 +111,18 @@ def playlist(url):
             )
 
 
-        #cache.save(playlist_id,jsn,1)
-        print("cacheing disabled")
+        cache.save(playlist_id,jsn,1)
     else:
-        urls = c['url']
-        titles = c['title']
+        for i in range(len(c['url'])):
+            jsn.append(
+                {
+                    "source": c['url'][i],
+                    "title": c['title'][i],
+                    "playlist": url
+                }
+            )
+
+
 
 
     t = str(round((time.time()-start_time)*1000))+'ms'
