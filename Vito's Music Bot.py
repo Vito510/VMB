@@ -130,7 +130,6 @@ async def play_next(ctx):
         if functions.queue_type(queue.tracks[queue.index]["source"]) == 0: 
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue.tracks[queue.index]["source"]), 1)                               #local music source
         else: 
-            print(queue.tracks[queue.index]["source"])
             source = await YTDLSource.from_url(queue.tracks[queue.index]["source"], loop=client.loop, stream=True)                           #online music source
             await asyncio.sleep(configuration['ffmpegWait'])                                                                #wait for ffmpeg to start
             if source == 0:
@@ -480,14 +479,11 @@ class Media_Controls(commands.Cog):
                 await ctx.send("No results found")
                 return 0
 
-            queue.add([{
-                "source": search[0],
-                "title": search[1]
-            }],ctx.author.id)
+            queue.add(search,ctx.author.id)
 
 
             if ctx.voice_client.is_playing() == True: 
-                await ctx.send("**[YouTube]** Queued: "+search[1])
+                await ctx.send("**[YouTube]** Queued: "+search[0]["title"])
 
         if FirstTimeSetup == True:
             Stop = False
@@ -610,20 +606,20 @@ async def recommend(ctx,* x):
 
     if '-yt' in x:
         try:
-            tracks = youtubeAPI.related(queue[queue.index-1],amount=limit)
+            tracks = youtubeAPI.related(queue.tracks[queue.index-1]["title"],amount=limit)
             
-            queue.add(tracks)
+            queue.add(tracks, client.user.id)
 
             await ctx.send("**[Youtube]** Queued "+str(len(tracks))+" tracks")
         except:
             pass
     else:
-        tracks = spotifyAPI.getRecommendation(queue_title[queue.index-1],limit)
+        tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],limit)
         await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
         tracks = await functions.youtube_search_thread(tracks)
 
-        queue.add(tracks)
+        queue.add(tracks, client.user.id)
 
         await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
 
