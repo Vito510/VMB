@@ -303,7 +303,7 @@ class Media_Controls(commands.Cog):
         if 'http' not in x:
             x = queue.tracks[queue.index-1]
 
-        await ctx.send(f"Currently playing:\n{x.title}\nAdded by: {x.added_by}")
+        await ctx.send(f"Currently playing:\n{x['source']}\nAdded by: <@{x['added_by']}>")
 
     @commands.command()
     async def fuck(self, ctx):
