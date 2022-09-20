@@ -326,8 +326,7 @@ class Media_Controls(commands.Cog):
         """Shuffles the queue"""
         if await check_if_connected_and_connect(ctx) == False: return 0
         x = random.randint
-        random.Random(x).shuffle(queue)
-        random.Random(x).shuffle(queue_title)
+        random.Random(x).shuffle(queue.tracks)
         #jump to the first song
         await Media_Controls.jump(self,ctx,number=0)
         await ctx.send("YES JAGOR THE SHUFFLE COMMAND WORKS")
@@ -345,12 +344,12 @@ class Media_Controls(commands.Cog):
             await ctx.send("Bruh thats not a number")
             return 0
     
-        if len(queue)*-1 <= number < len(queue):
-            if number < 0: number = len(queue)+number
+        if len(queue.tracks)*-1 <= number < len(queue.tracks):
+            if number < 0: number = len(queue.tracks)+number
             queue.index = number
             logging.info("jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
-        else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
+        else: await ctx.send("Number out of range [{}..{}]".format((len(queue.tracks)-1)*-1,len(queue.tracks)-1))
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
