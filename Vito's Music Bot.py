@@ -298,12 +298,12 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        x = str(queue[queue.index-1])
+        x = queue.tracks[queue.index-1]
 
         if 'http' not in x:
-            x = str(queue_title[queue.index-1])
+            x = queue.tracks[queue.index-1]
 
-        await ctx.send("Currently playing:\n"+x)
+        await ctx.send(f"Currently playing:\n{x.title}\nAdded by: {x.added_by}")
 
     @commands.command()
     async def fuck(self, ctx):
@@ -403,7 +403,7 @@ class Media_Controls(commands.Cog):
                 return
 
             queue.add(playlist, ctx.author.id)
-            await ctx.send("**[YouTube]** Queued "+str(len(playlist[1]))+" tracks")
+            await ctx.send("**[YouTube]** Queued "+str(len(playlist))+" tracks")
 
 
         elif t == 0:
