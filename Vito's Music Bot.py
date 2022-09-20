@@ -152,10 +152,10 @@ async def play_next(ctx):
 
     else:
         #print(functions.timestamp()+"play_next() - looping back to start")                                                            #play again from the start of the queue
-        if queueMode == "loop":
+        if queue.mode == "loop":
             queue.index = 0
             await play_next(ctx)
-        elif queueMode == "none":
+        elif queue.mode == "none":
             #stop
             Stop = True
             FirstTimeSetup = True
@@ -565,13 +565,13 @@ class Media_Controls(commands.Cog):
     async def loop(self, ctx):
         """Toggles looping"""
         global queueMode
-        if queueMode == "loop":
-            queueMode = "none"
+        if queue.mode == "loop":
+            queue.mode = "none"
             logging.info("looping disabled")
 
             await ctx.send("Looping disabled")
         else:
-            queueMode = "loop"
+            queue.mode = "loop"
             logging.info("looping enabled")
 
             await ctx.send("Looping the queue")
@@ -641,17 +641,17 @@ async def join(ctx):
 
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
-    global loopMode
+    global queue
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
-    loopMode = configuration["queueMode"]
+    queue.mode = configuration["queueMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
     
 
 @client.event
 async def on_voice_state_update(member,before,after):
-    global Stop, queue, FirstTimeSetup, loopMode
+    global Stop, queue, FirstTimeSetup
     if before.channel != None:
         vc = client.get_channel(before.channel.id)
 
@@ -670,9 +670,9 @@ async def on_voice_state_update(member,before,after):
 
             await member.guild.voice_client.disconnect()
             Stop = True
-            loopMode = configuration["queueMode"]
-            queue = []
-            queue_title = []
+            queue.mode = configuration["queueMode"]
+            queue.tracks = []
+
             queue.index = int(0)
             FirstTimeSetup = True
             logging.info("disconnected")
