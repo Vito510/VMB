@@ -204,15 +204,26 @@ class Folder_Exploration(commands.Cog):
                 
         if index.split(" ")[0] == "range":
             for i in range(int(index.split(" ")[1]),int(index.split(" ")[2])+1):
-                queue.append(path+'/'+x_list[int(i)])
-                queue_title.append(x_list[int(i)])
+
+                queue.add([{
+                    "source": path+'/'+x_list[int(i)],
+                    "title": x_list[int(i)]
+                }], ctx.author.id)
+                
         elif index.split(" ")[0] == "all":
             for i in range(0,len(x_list)-1):
-                queue.append(path+'/'+x_list[int(i)])
-                queue_title.append(x_list[int(i)])
+
+                queue.add([{
+                    "source": path+'/'+x_list[int(i)],
+                    "title": x_list[int(i)]
+                }], ctx.author.id)
+
         else:
-            queue.append(path+'/'+x_list[int(index)])
-            queue_title.append(x_list[int(index)])
+
+            queue.add([{
+                "source": path+'/'+x_list[int(i)],
+                "title": x_list[int(i)]
+            }], ctx.author.id)
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
@@ -531,9 +542,9 @@ class Media_Controls(commands.Cog):
     async def delete(self, ctx, integer):
         """Delete specific queued track"""
         if int(queue.index)-1 == int(integer): ctx.voice_client.stop() 
-        await ctx.send("Removed: "+queue_title[int(integer)])
-        del queue[int(integer)]
-        del queue_title[int(integer)]
+        await ctx.send("Removed: "+queue.tracks[int(integer)]["title"])
+        del queue.tracks[int(integer)]
+
 
     @commands.command()
     async def clear(self, ctx):
