@@ -128,14 +128,15 @@ def youtube_search_thread(searches):
     for i in range(len(threads)):
         threads[i].join()
 
-    urls = []
-    titles = []
+    jsn = []
 
     for item in result:
-        urls.append(item[0])
-        titles.append(item[1])
+        jsn.append({
+            "urls": item[0],
+            "titles": item[1]
+        })
 
-    return (urls,titles)
+    return jsn
 
 
 def generate_dir_list(dir):
