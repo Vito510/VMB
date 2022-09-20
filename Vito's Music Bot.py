@@ -611,10 +611,10 @@ async def recommend(ctx,* x):
     if '-yt' in x:
         try:
             tracks = youtubeAPI.related(queue[queue.index-1],amount=limit)
-            queue.extend(tracks[0])
-            queue_title.extend(tracks[1])
+            
+            queue.add(tracks)
 
-            await ctx.send("**[Youtube]** Queued "+str(len(tracks[0]))+" tracks")
+            await ctx.send("**[Youtube]** Queued "+str(len(tracks))+" tracks")
         except:
             pass
     else:
@@ -623,10 +623,9 @@ async def recommend(ctx,* x):
         
         tracks = await functions.youtube_search_thread(tracks)
 
-        queue.extend(tracks[0])
-        queue_title.extend(tracks[1])
+        queue.add(tracks)
 
-        await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+        await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
 
 
 @client.command()
