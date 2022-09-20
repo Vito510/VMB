@@ -495,7 +495,7 @@ class Media_Controls(commands.Cog):
     async def q(self, ctx):
         """View the queue"""
 
-        if len(queue_title) == 0: 
+        if len(queue.tracks) == 0: 
             await ctx.send("The queue is empty dumbass")
             return 0
 
@@ -504,8 +504,9 @@ class Media_Controls(commands.Cog):
         limit = 100
         out = 0
 
-        while out < len(queue_title):
-            y = queue_title[out:limit+out]
+        while out < len(queue.tracks):
+            y = queue.tracks[out:limit+out]
+
             r.append(y)
 
             out += len(y)
@@ -515,7 +516,7 @@ class Media_Controls(commands.Cog):
             with open("cache/queue.md", "w", encoding="utf-8") as f:
                 for i in item:
                     n = '\n' if count % 100 != 0 or count-1 == 0 else ''
-                    i = i.replace('\n','')
+                    i = i["title"].replace('\n','')
                     if count == queue.index: 
                         f.write('# {}: {}{}'.format(count-1,i,n))
                     else:
