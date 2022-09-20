@@ -550,13 +550,12 @@ class Media_Controls(commands.Cog):
     async def clear(self, ctx):
         """Clears the queue"""
         global queue,Stop,FirstTimeSetup
-        if len(queue_title) == 0:
+        if len(queue.tracks) == 0:
             return None
         if await check_if_connected_and_connect(ctx) == False: return 0
         ctx.voice_client.stop()
         Stop = True
-        queue = []
-        queue_title = []
+        queue.tracks = []
         queue.index = int(0)
         FirstTimeSetup = True
 
