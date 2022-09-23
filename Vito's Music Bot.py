@@ -92,7 +92,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         except Exception as e:
             click.echo(str(e))
             logging.error(str(e))
-            if len(queue) == 1: 
+            if len(queue.tracks) == 1: 
                 Stop = True
                 FirstTimeSetup = True
             temp = queue.tracks[queue.index].split("=")[-1].replace("\n","")
@@ -382,7 +382,7 @@ class Media_Controls(commands.Cog):
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
 
-        if len(queue) == 0: 
+        if len(queue.tracks) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
             await Media_Controls.jump(self,ctx,number=queue.index-2)
