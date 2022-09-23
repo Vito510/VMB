@@ -164,18 +164,18 @@ async def play_next(ctx):
 async def check_if_connected_and_connect(ctx):
     if ctx.voice_client is None:
         try:
-            channel = ctx.author.voice.channel
+            if ctx.author.voice is not None:
+                channel = ctx.author.voice.channel
 
-            logging.info("bot not connected to a channel, auto connecting - channel: "+str(channel))
+                logging.info("bot not connected to a channel, auto connecting - channel: "+str(channel))
 
-            await channel.connect()
+                await channel.connect()
 
-            if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
+                if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
 
-            return True
-        except discord.errors.ClientException:
-            await ctx.send("You have to be connected to a voice channel")
-            return False
+                return True
+            else:
+                await ctx.send("You are not connected to a voice channel")
         except Exception as e:
             logging.error(str(e))
             return False
@@ -637,7 +637,18 @@ async def recommend(ctx,* x):
 @client.command()
 async def join(ctx):
     """Joins a voice channel"""
-    await check_if_connected_and_connect(ctx)
+
+    if len(client.voice_clients) == 0:
+        await check_if_connected_and_connect(ctx)
+    else:
+
+        if ctx.author.voice is not None: 
+            channel = ctx.author.voice.channel
+            await client.voice_clients[0].disconnect()
+            await channel.connect()
+        else:
+            await ctx.send("You are not connected to a voice channel")
+
 
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
