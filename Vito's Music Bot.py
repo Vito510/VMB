@@ -63,9 +63,10 @@ class queue():
     index = 0
     mode = configuration["queueMode"]
 
-    def add(jsn,added_by):
+    def add(jsn,added_by, parent=None):
         for i in jsn:
             i["added_by"] = added_by
+            i["parent"] = parent
             queue.tracks.append(i)
 
     def now():
@@ -314,7 +315,9 @@ class Media_Controls(commands.Cog):
         if 'http' not in x:
             x = queue.tracks[queue.index-1]
 
-        await ctx.send(f"Currently playing:\n{x['source']}\nAdded by: <@{x['added_by']}>")
+        f = f"\nPart of: *{x['parent']}*" if x['parent'] != None else ""
+
+        await ctx.send(f"Currently playing:\n{x['source']}\nAdded by: <@{x['added_by']}>{f}")
 
     @commands.command()
     async def fuck(self, ctx):
@@ -412,7 +415,7 @@ class Media_Controls(commands.Cog):
                 await ctx.send("Error, view console for more info")
                 return
 
-            queue.add(playlist, ctx.author.id)
+            queue.add(playlist, ctx.author.id, parent=search)
             await ctx.send("**[YouTube]** Queued "+str(len(playlist))+" tracks")
 
 
@@ -466,7 +469,7 @@ class Media_Controls(commands.Cog):
                     queue.add([{
                         "source": tracks[0][i],
                         "title": tracks[1][i]
-                    }], ctx.author.id)
+                    }], ctx.author.id, parent=search)
 
                 cache.save(search, tracks[0], tracks[1], 1)
 
