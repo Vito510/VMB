@@ -454,6 +454,7 @@ class Media_Controls(commands.Cog):
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+search)
         elif t == 3:
             #Spotify playlist
+            link = search
             search = search.split('playlist/')[-1].split('?')[0]
 
             c = cache.load(search,1)
@@ -465,15 +466,11 @@ class Media_Controls(commands.Cog):
                 #convert to yt
                 tracks = await functions.youtube_search_thread(tracks)
 
-                for i in range(tracks[0]):
-                    queue.add([{
-                        "source": tracks[0][i],
-                        "title": tracks[1][i]
-                    }], ctx.author.id, parent=search)
+                queue.add(tracks, ctx.author.id, parent=link)
 
-                cache.save(search, tracks[0], tracks[1], 1)
+                #cache.save(search, tracks[0], tracks[1], 1)
 
-                await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+                await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
             else:
                 queue.add(c,ctx.author.id)
 
