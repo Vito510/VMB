@@ -56,7 +56,8 @@ def search(search):
 
         cache.save(search,jsn[0]["source"],jsn[0]["title"],0)
     else:
-        jsn.append(c)
+        jsn.extend(c)
+
 
     t = str(round((time.time()-start_time)*1000))+'ms'
     logging.info("Found: \x1B[4m"+jsn[0]["title"]+"\x1B[0m in "+t)
