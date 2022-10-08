@@ -154,12 +154,10 @@ async def play_next(ctx):
 
     else:
         #play again from the start of the queue
-        print(queue.mode)
         if queue.mode == "loop":
             queue.index = 0
             await play_next(ctx)
         elif queue.mode == "auto-recommend":
-            print('here')
             tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],1)
             tracks = functions.youtube_search(tracks[0])
 
