@@ -424,7 +424,7 @@ class Media_Controls(commands.Cog):
 
             c = cache.load(search,2)
 
-            if c == None:
+            if c is None:
 
                 jsn = [{
                     "source": search,
@@ -459,7 +459,7 @@ class Media_Controls(commands.Cog):
 
             c = cache.load(search,1)
 
-            if c == None:
+            if c is None:
                 tracks = spotifyAPI.playlist(search)
 
                 await ctx.send('**[Spotify]** Converting tracks this may kill the bot for a bit')
@@ -485,7 +485,7 @@ class Media_Controls(commands.Cog):
             else:
                 search = functions.youtube_search(search)
 
-            if search == None:
+            if search is None:
                 await ctx.send("No results found")
                 return 0
 
