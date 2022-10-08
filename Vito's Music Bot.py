@@ -28,7 +28,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
     handlers=[
-        logging.FileHandler('./logs/{}.log'.format(x.strftime("%d-%m-%Y %H-%M-%S"))),
+        logging.FileHandler(f'./logs/{x.strftime("%d-%m-%Y %H-%M-%S")}.log', encoding='utf-8'),
         logging.StreamHandler(stream=sys.stdout)
     ]
     )
@@ -154,11 +154,16 @@ async def play_next(ctx):
 
     else:
         #play again from the start of the queue
+        print(queue.mode)
         if queue.mode == "loop":
             queue.index = 0
             await play_next(ctx)
         elif queue.mode == "recommend":
-            await recommend(ctx)
+            print('here')
+            tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],1)
+            tracks = functions.youtube_search(tracks[0])
+
+            queue.add(tracks, client.user.id)
             await play_next(ctx)
         elif queue.mode == "none":
             #stop
@@ -309,6 +314,7 @@ class Media_Controls(commands.Cog):
             await ctx.send("Resumed music playback")
         except:
             await ctx.send("Music is not paused")
+
 
     @commands.command()
     async def now(self, ctx):
@@ -616,6 +622,7 @@ async def recommend(ctx,* x):
         try:
             limit = int(item)
         except:
+            limit = 10
             pass
 
     if '-yt' in x:
@@ -637,6 +644,11 @@ async def recommend(ctx,* x):
 
         await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
 
+@client.command()
+async def autorecommend(ctx):
+    global queue
+    queue.mode = "recommend"
+    await ctx.send("Set queue mode to auto-recommend")
 
 @client.command()
 async def join(ctx):
