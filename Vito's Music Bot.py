@@ -57,7 +57,7 @@ class queue():
         #source
         #title
         #added-by
-        #playlist
+        #parent
     ]
 
     index = 0
