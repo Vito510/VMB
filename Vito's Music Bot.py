@@ -147,14 +147,18 @@ async def play_next(ctx):
                 queue.index += 1
 
         except Exception as e:
+            #move to next song in list (on error)
             logging.error("play error: "+str(e))
-            queue.index += 1                                                                                   #move to next song in list (on error)
+            queue.index += 1                                                
             await play_next(ctx)
 
     else:
-        #print(functions.timestamp()+"play_next() - looping back to start")                                                            #play again from the start of the queue
+        #play again from the start of the queue
         if queue.mode == "loop":
             queue.index = 0
+            await play_next(ctx)
+        elif queue.mode == "recommend":
+            await recommend(ctx)
             await play_next(ctx)
         elif queue.mode == "none":
             #stop
@@ -434,7 +438,7 @@ class Media_Controls(commands.Cog):
                 queue.add(jsn, ctx.author.id)
 
 
-                cache.save(search,jsn[0]['url'],jsn[0]["title"],2)
+                cache.save(search,jsn[0]['source'],jsn[0]["title"],2)
             else:
                 queue.add(c, ctx.author.id)
 
