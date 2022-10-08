@@ -158,7 +158,7 @@ async def play_next(ctx):
         if queue.mode == "loop":
             queue.index = 0
             await play_next(ctx)
-        elif queue.mode == "recommend":
+        elif queue.mode == "auto-recommend":
             print('here')
             tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],1)
             tracks = functions.youtube_search(tracks[0])
@@ -544,6 +544,7 @@ class Media_Controls(commands.Cog):
 
                     count += 1
 
+            await ctx.send(f"Queue mode: **{queue.mode}**")
             await ctx.send(file=discord.File('cache/queue.md'))
 
         os.remove("cache/queue.md")
@@ -621,7 +622,7 @@ async def recommend(ctx,* x):
     for item in x:
         try:
             limit = int(item)
-        except:
+        except Exception:
             limit = 10
             pass
 
@@ -632,7 +633,7 @@ async def recommend(ctx,* x):
             queue.add(tracks, client.user.id)
 
             await ctx.send("**[Youtube]** Queued "+str(len(tracks))+" tracks")
-        except:
+        except Exception:
             pass
     else:
         tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],limit)
@@ -647,8 +648,13 @@ async def recommend(ctx,* x):
 @client.command()
 async def autorecommend(ctx):
     global queue
-    queue.mode = "recommend"
-    await ctx.send("Set queue mode to auto-recommend")
+
+    if queue.mode == "auto-recommend":
+        queue.mode = "none"
+        await ctx.send("Disabled auto-recommend")
+    else:
+        queue.mode = "auto-recommend"
+        await ctx.send("Enabled auto-recommend")
 
 @client.command()
 async def join(ctx):
