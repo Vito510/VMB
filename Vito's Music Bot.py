@@ -28,7 +28,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
     handlers=[
-        logging.FileHandler('./logs/{}.log'.format(x.strftime("%d-%m-%Y %H-%M-%S"))),
+        logging.FileHandler(f'./logs/{x.strftime("%d-%m-%Y %H-%M-%S")}.log', encoding='utf-8'),
         logging.StreamHandler(stream=sys.stdout)
     ]
     )
@@ -147,14 +147,23 @@ async def play_next(ctx):
                 queue.index += 1
 
         except Exception as e:
+            #move to next song in list (on error)
             logging.error("play error: "+str(e))
-            queue.index += 1                                                                                   #move to next song in list (on error)
+            queue.index += 1                                                
             await play_next(ctx)
 
     else:
-        #print(functions.timestamp()+"play_next() - looping back to start")                                                            #play again from the start of the queue
+        #play again from the start of the queue
+        print(queue.mode)
         if queue.mode == "loop":
             queue.index = 0
+            await play_next(ctx)
+        elif queue.mode == "auto-recommend":
+            print('here')
+            tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],1)
+            tracks = functions.youtube_search(tracks[0])
+
+            queue.add(tracks, client.user.id)
             await play_next(ctx)
         elif queue.mode == "none":
             #stop
@@ -306,6 +315,7 @@ class Media_Controls(commands.Cog):
         except:
             await ctx.send("Music is not paused")
 
+
     @commands.command()
     async def now(self, ctx):
         """Shows current track"""
@@ -424,7 +434,7 @@ class Media_Controls(commands.Cog):
 
             c = cache.load(search,2)
 
-            if c == None:
+            if c is None:
 
                 jsn = [{
                     "source": search,
@@ -434,7 +444,7 @@ class Media_Controls(commands.Cog):
                 queue.add(jsn, ctx.author.id)
 
 
-                cache.save(search,jsn[0]['url'],jsn[0]["title"],2)
+                cache.save(search,jsn[0]['source'],jsn[0]["title"],2)
             else:
                 queue.add(c, ctx.author.id)
 
@@ -459,7 +469,7 @@ class Media_Controls(commands.Cog):
 
             c = cache.load(search,1)
 
-            if c == None:
+            if c is None:
                 tracks = spotifyAPI.playlist(search)
 
                 await ctx.send('**[Spotify]** Converting tracks this may kill the bot for a bit')
@@ -485,7 +495,7 @@ class Media_Controls(commands.Cog):
             else:
                 search = functions.youtube_search(search)
 
-            if search == None:
+            if search is None:
                 await ctx.send("No results found")
                 return 0
 
@@ -534,6 +544,7 @@ class Media_Controls(commands.Cog):
 
                     count += 1
 
+            await ctx.send(f"Queue mode: **{queue.mode}**")
             await ctx.send(file=discord.File('cache/queue.md'))
 
         os.remove("cache/queue.md")
@@ -611,7 +622,8 @@ async def recommend(ctx,* x):
     for item in x:
         try:
             limit = int(item)
-        except:
+        except Exception:
+            limit = 10
             pass
 
     if '-yt' in x:
@@ -621,7 +633,7 @@ async def recommend(ctx,* x):
             queue.add(tracks, client.user.id)
 
             await ctx.send("**[Youtube]** Queued "+str(len(tracks))+" tracks")
-        except:
+        except Exception:
             pass
     else:
         tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],limit)
@@ -633,6 +645,16 @@ async def recommend(ctx,* x):
 
         await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
 
+@client.command()
+async def autorecommend(ctx):
+    global queue
+
+    if queue.mode == "auto-recommend":
+        queue.mode = "none"
+        await ctx.send("Disabled auto-recommend")
+    else:
+        queue.mode = "auto-recommend"
+        await ctx.send("Enabled auto-recommend")
 
 @client.command()
 async def join(ctx):
