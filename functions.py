@@ -103,7 +103,7 @@ def youtube_search(search):
     t = str(round((time.time()-start_time)*1000))+'ms'
     logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
     
-    return [search_url,search_title]
+    return [{"source": search_url,"title": search_title}]
 
 @to_thread
 def youtube_search_thread(searches):
@@ -128,14 +128,15 @@ def youtube_search_thread(searches):
     for i in range(len(threads)):
         threads[i].join()
 
-    urls = []
-    titles = []
+    jsn = []
 
     for item in result:
-        urls.append(item[0])
-        titles.append(item[1])
+        jsn.append({
+            "source": item[0],
+            "title": item[1]
+        })
 
-    return (urls,titles)
+    return jsn
 
 
 def generate_dir_list(dir):

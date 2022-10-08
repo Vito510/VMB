@@ -84,8 +84,23 @@ def load(x,t):
     with open(path) as f:
         data = json.load(f)
         if x in data:
+            jsn = []
             logging.info("Reading from cache")
-            return data[x]
+
+            if t == 1:
+                for i in range(len(data[x]['url'])):
+                    jsn.append({
+                        "source": data[x]['url'][i],
+                        "title": data[x]['title'][i]
+                    })  
+            else:
+                jsn.append({
+                    "source": data[x]['url'],
+                    "title": data[x]['title']
+                })       
+
+            return jsn
+
         else:
             return None
 

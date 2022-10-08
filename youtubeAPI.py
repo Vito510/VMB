@@ -23,9 +23,9 @@ else:
 
 def search(search):
     """Returns a youtube video title and a url from a search term"""
-    global search_url,search_title
 
     start_time = time.time()
+    jsn = []
 
     c = cache.load(search,0)
 
@@ -49,17 +49,20 @@ def search(search):
             logging.info("No results found")
             return None
 
-        search_url = "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId']
-        search_title = unescape(response['items'][0]['snippet']['title'])
-        cache.save(search,search_url,search_title,0)
+        jsn = [{
+            "source": "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId'],
+            "title": unescape(response['items'][0]['snippet']['title'])
+        }]
+
+        cache.save(search,jsn[0]["source"],jsn[0]["title"],0)
     else:
-        search_url = c['url']
-        search_title = unescape(c['title'])
+        jsn.extend(c)
+
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Found: \x1B[4m"+search_title+"\x1B[0m in "+t)
+    logging.info("Found: \x1B[4m"+jsn[0]["title"]+"\x1B[0m in "+t)
 
-    return [search_url,search_title]
+    return jsn
 
 def playlist(url):
     """Returns a list of urls from a youtube playlist"""
@@ -68,10 +71,11 @@ def playlist(url):
     query = parse_qs(urlparse(url).query, keep_blank_values=True)
     playlist_id = query["list"][0]
 
+    jsn = []
+
     c = cache.load(playlist_id,1)
 
     if c == None:
-        list = []
 
         try:
             request = youtube.playlistItems().list(
@@ -96,26 +100,35 @@ def playlist(url):
             playlist_items += response["items"]
             request = youtube.playlistItems().list_next(request, response)
         
-        for t in playlist_items:
-            list.append('https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"])
-        urls = list
-        list = []
-        for t in playlist_items:
-            list.append(t["snippet"]["title"])
+        #still gotta use this until I change cache.save()
+        urls = []
+        titles = []
 
-        titles = list
+        for t in playlist_items:
+            jsn.append(
+                {
+                    "source": 'https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"],
+                    "title": t["snippet"]["title"],
+                    "playlist": url
+                })
+
+            urls.append('https://www.youtube.com/watch?v='+t["snippet"]["resourceId"]["videoId"])
+            titles.append(t["snippet"]["title"])
+
 
         cache.save(playlist_id,urls,titles,1)
     else:
-        urls = c['url']
-        titles = c['title']
+        for i in c:
+            jsn.append(i)
+
+
 
 
     t = str(round((time.time()-start_time)*1000))+'ms'
-    logging.info("Got {} items from {} in {}".format(len(titles),playlist_id,t))
+    logging.info("Got {} items from {} in {}".format(len(jsn),playlist_id,t))
 
 
-    return [urls,titles]
+    return jsn
 
 def related(url,amount=10):
     '''Returns related music videos'''
@@ -135,9 +148,7 @@ def related(url,amount=10):
 
 
     d = json.loads(data.text)
-    urls = []
-    titles = []
-
+    jsn = []
 
     for item in d['items']:
         url = 'https://www.youtube.com/watch?v='+item['id']['videoId']
@@ -148,7 +159,9 @@ def related(url,amount=10):
             #some results are deleted videos they keep id's but dont contain snippets
             continue
 
-        urls.append(url)
-        titles.append(title)
+        jsn.append({
+            "source": url,
+            "title": title,
+        })
 
-    return [urls,titles]
+    return jsn

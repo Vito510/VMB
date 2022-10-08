@@ -44,16 +44,36 @@ intents = discord.Intents.all()
 intents.members = True
 intents.presences = True
 
-queueMode = configuration["queueMode"]
+
 client = commands.Bot(command_prefix='Vito ', intents=intents)
 ytdl = YoutubeDL(configuration['ytdl_format_options'])
 Stop = False
 FirstTimeSetup = True
 path = str("D:/Music/FLAC_baby!!!")     #Default path
-queue = []
-queue_title = []
-queue_index = int(0)
-playlist = []
+
+
+class queue():
+    tracks = [
+        #source
+        #title
+        #added-by
+        #parent
+    ]
+
+    index = 0
+    mode = configuration["queueMode"]
+
+    def add(jsn,added_by, parent=None):
+        for i in jsn:
+            i["added_by"] = added_by
+            i["parent"] = parent
+            queue.tracks.append(i)
+
+    def now():
+        return [queue.index-1]
+
+
+
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=1):
@@ -66,19 +86,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=True):
-        global filename,queue,queue_title,queue_index,Stop,FirstTimeSetup
+        global filename,queue,Stop,FirstTimeSetup
 
         try:
             data = ytdl.extract_info(url, download=False)
         except Exception as e:
             click.echo(str(e))
             logging.error(str(e))
-            if len(queue) == 1: 
+            if len(queue.tracks) == 1: 
                 Stop = True
                 FirstTimeSetup = True
-            temp = queue[queue_index].split("=")[-1].replace("\n","")
-            del queue[queue_index]
-            del queue_title[queue_index]
+            temp = queue.tracks[queue.index].split("=")[-1].replace("\n","")
+            del queue.tracks[queue.index]
             click.secho(functions.timestamp()+"{} removed from queue".format(temp),fg="red")
             logging.info('{} removed from queue'.format(temp))
             temp = None
@@ -97,7 +116,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 
 async def play_next(ctx):
-    global Stop,queue_index,filename,msg,FirstTimeSetup, queueMode
+    global Stop,queue,filename,msg,FirstTimeSetup, queueMode
     if Stop == True:
         return 0
 
@@ -108,36 +127,36 @@ async def play_next(ctx):
         return 0
 
 
-    if queue_index < len(queue):
-        if functions.queue_type(queue[queue_index]) == 0: 
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue[queue_index]), 1)                               #local music source
+    if queue.index < len(queue.tracks):
+        if functions.queue_type(queue.tracks[queue.index]["source"]) == 0: 
+            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(queue.tracks[queue.index]["source"]), 1)                               #local music source
         else: 
-            source = await YTDLSource.from_url(queue[queue_index], loop=client.loop, stream=True)                           #online music source
+            source = await YTDLSource.from_url(queue.tracks[queue.index]["source"], loop=client.loop, stream=True)                           #online music source
             await asyncio.sleep(configuration['ffmpegWait'])                                                                #wait for ffmpeg to start
             if source == 0:
-                queue_index += 1
+                queue.index += 1
                 await play_next(ctx)
                 return 0
 
         try:
-            if queue_index < len(queue):
-                msg = ('**`'+'Now playing track {}: {}'.format(queue_index,queue_title[queue_index])+'`**')
+            if queue.index < len(queue.tracks):
+                msg = ('**`'+'Now playing track {}: {}'.format(queue.index,queue.tracks[queue.index]["title"])+'`**')
                 if Stop == False: await ctx.send(msg,delete_after=10)       #now playing message
                 ctx.voice_client.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
 
-                queue_index += 1
+                queue.index += 1
 
         except Exception as e:
             logging.error("play error: "+str(e))
-            queue_index = queue_index + 1                                                                                   #move to next song in list (on error)
+            queue.index += 1                                                                                   #move to next song in list (on error)
             await play_next(ctx)
 
     else:
         #print(functions.timestamp()+"play_next() - looping back to start")                                                            #play again from the start of the queue
-        if queueMode == "loop":
-            queue_index = 0
+        if queue.mode == "loop":
+            queue.index = 0
             await play_next(ctx)
-        elif queueMode == "none":
+        elif queue.mode == "none":
             #stop
             Stop = True
             FirstTimeSetup = True
@@ -146,18 +165,18 @@ async def play_next(ctx):
 async def check_if_connected_and_connect(ctx):
     if ctx.voice_client is None:
         try:
-            channel = ctx.author.voice.channel
+            if ctx.author.voice is not None:
+                channel = ctx.author.voice.channel
 
-            logging.info("bot not connected to a channel, auto connecting - channel: "+str(channel))
+                logging.info("bot not connected to a channel, auto connecting - channel: "+str(channel))
 
-            await channel.connect()
+                await channel.connect()
 
-            if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
+                if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(0))
 
-            return True
-        except discord.errors.ClientException:
-            await ctx.send("You have to be connected to a voice channel")
-            return False
+                return True
+            else:
+                await ctx.send("You are not connected to a voice channel")
         except Exception as e:
             logging.error(str(e))
             return False
@@ -186,15 +205,26 @@ class Folder_Exploration(commands.Cog):
                 
         if index.split(" ")[0] == "range":
             for i in range(int(index.split(" ")[1]),int(index.split(" ")[2])+1):
-                queue.append(path+'/'+x_list[int(i)])
-                queue_title.append(x_list[int(i)])
+
+                queue.add([{
+                    "source": path+'/'+x_list[int(i)],
+                    "title": x_list[int(i)]
+                }], ctx.author.id)
+                
         elif index.split(" ")[0] == "all":
             for i in range(0,len(x_list)-1):
-                queue.append(path+'/'+x_list[int(i)])
-                queue_title.append(x_list[int(i)])
+
+                queue.add([{
+                    "source": path+'/'+x_list[int(i)],
+                    "title": x_list[int(i)]
+                }], ctx.author.id)
+
         else:
-            queue.append(path+'/'+x_list[int(index)])
-            queue_title.append(x_list[int(index)])
+
+            queue.add([{
+                "source": path+'/'+x_list[int(i)],
+                "title": x_list[int(i)]
+            }], ctx.author.id)
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
@@ -280,12 +310,14 @@ class Media_Controls(commands.Cog):
     async def now(self, ctx):
         """Shows current track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
-        x = str(queue[queue_index-1])
+        x = queue.tracks[queue.index-1]
 
         if 'http' not in x:
-            x = str(queue_title[queue_index-1])
+            x = queue.tracks[queue.index-1]
 
-        await ctx.send("Currently playing:\n"+x)
+        f = f"\nPart of: *{x['parent']}*" if x['parent'] != None else ""
+
+        await ctx.send(f"Currently playing:\n{x['source']}\nAdded by: <@{x['added_by']}>{f}")
 
     @commands.command()
     async def fuck(self, ctx):
@@ -308,8 +340,7 @@ class Media_Controls(commands.Cog):
         """Shuffles the queue"""
         if await check_if_connected_and_connect(ctx) == False: return 0
         x = random.randint
-        random.Random(x).shuffle(queue)
-        random.Random(x).shuffle(queue_title)
+        random.Random(x).shuffle(queue.tracks)
         #jump to the first song
         await Media_Controls.jump(self,ctx,number=0)
         await ctx.send("YES JAGOR THE SHUFFLE COMMAND WORKS")
@@ -317,7 +348,7 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["j"])
     async def jump(self, ctx, *, number,s=False):
         """Jump to certain track using list index"""
-        global queue,queue_index,FirstTimeSetup,Stop
+        global queue,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
         Stop = False
 
@@ -327,12 +358,12 @@ class Media_Controls(commands.Cog):
             await ctx.send("Bruh thats not a number")
             return 0
     
-        if len(queue)*-1 <= number < len(queue):
-            if number < 0: number = len(queue)+number
-            queue_index = number
+        if len(queue.tracks)*-1 <= number < len(queue.tracks):
+            if number < 0: number = len(queue.tracks)+number
+            queue.index = number
             logging.info("jumping to track: "+str(number))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
-        else: await ctx.send("Number out of range [{}..{}]".format((len(queue)-1)*-1,len(queue)-1))
+        else: await ctx.send("Number out of range [{}..{}]".format((len(queue.tracks)-1)*-1,len(queue.tracks)-1))
 
         if FirstTimeSetup == True:
             FirstTimeSetup = False
@@ -345,19 +376,19 @@ class Media_Controls(commands.Cog):
         if FirstTimeSetup == True: 
             await ctx.send("Shit must be playing first before you can skip")
         else:
-            logging.info("skiping to track: "+str(queue_index))
+            logging.info("skiping to track: "+str(queue.index))
             ctx.voice_client.stop()     #Zaustavlja pjesmu sto ce pokrenuti after funkciju u ctx.voice_client.play
 
     @commands.command(aliases=["b"])
     async def back(self, ctx,s=False):
-        global queue_index
+        global queue
         """Plays previous track"""
         if await check_if_connected_and_connect(ctx) == False: return 0
 
-        if len(queue) == 0: 
+        if len(queue.tracks) == 0: 
             await ctx.send("Shit must be playing first before you can go back")
         else:
-            await Media_Controls.jump(self,ctx,number=queue_index-2)
+            await Media_Controls.jump(self,ctx,number=queue.index-2)
 
     @commands.command()
     async def yt(self, ctx):
@@ -371,7 +402,7 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["p"])
     async def play(self, ctx, *, search):
         """Plays music, obviously. What did you expect?"""
-        global queue,queue_title,FirstTimeSetup,Stop
+        global queue,FirstTimeSetup,Stop
         if await check_if_connected_and_connect(ctx) == False: return 0
 
         t = functions.play_type(search)
@@ -384,38 +415,46 @@ class Media_Controls(commands.Cog):
                 await ctx.send("Error, view console for more info")
                 return
 
-            queue.extend(playlist[0])
-            queue_title.extend(playlist[1])
-            await ctx.send("**[YouTube]** Queued "+str(len(playlist[1]))+" tracks")
+            queue.add(playlist, ctx.author.id, parent=search)
+            await ctx.send("**[YouTube]** Queued "+str(len(playlist))+" tracks")
+
+
         elif t == 0:
             #YT link
 
             c = cache.load(search,2)
 
             if c == None:
-                queue.append(search)
-                title = functions.get_title(search)
-                queue_title.append(title)
 
-                cache.save(search,search,title,2)
+                jsn = [{
+                    "source": search,
+                    "title": functions.get_title(search),
+                }]
+
+                queue.add(jsn, ctx.author.id)
+
+
+                cache.save(search,jsn[0]['url'],jsn[0]["title"],2)
             else:
-                queue.append(c['url'])
-                title = c['title']
-                queue_title.append(title)
+                queue.add(c, ctx.author.id)
 
 
-            if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+title)
+            if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+jsn[0]['title'])
         elif t == 2:
             #URL
             if functions.is_supported(search) == False:
                 await ctx.send("Unsupported URL")
                 return 0
 
-            queue_title.append(search)
-            queue.append(search)
+            queue.add([{
+                "source": search,
+                "title": search
+            }], ctx.author.id)
+
             if ctx.voice_client.is_playing() == True: await ctx.send("Queued: "+search)
         elif t == 3:
             #Spotify playlist
+            link = search
             search = search.split('playlist/')[-1].split('?')[0]
 
             c = cache.load(search,1)
@@ -427,20 +466,19 @@ class Media_Controls(commands.Cog):
                 #convert to yt
                 tracks = await functions.youtube_search_thread(tracks)
 
-                queue.extend(tracks[0])
-                queue_title.extend(tracks[1])
+                queue.add(tracks, ctx.author.id, parent=link)
 
-                cache.save(search, tracks[0], tracks[1], 1)
+                #cache.save(search, tracks[0], tracks[1], 1)
 
-                await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+                await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
             else:
-                queue.extend(c['url'])
-                queue_title.extend(c['title'])
+                queue.add(c,ctx.author.id)
 
                 await ctx.send("**[Spotify]** Queued "+str(len(c['url']))+" tracks")
 
 
         else:
+            #search
 
             if configuration["UseYoutubeSearchAPI"]:
                 search = youtubeAPI.search(search)
@@ -451,10 +489,11 @@ class Media_Controls(commands.Cog):
                 await ctx.send("No results found")
                 return 0
 
-            queue.append(search[0])
-            queue_title.append(search[1])
+            queue.add(search,ctx.author.id)
+
+
             if ctx.voice_client.is_playing() == True: 
-                await ctx.send("**[YouTube]** Queued: "+search[1])
+                await ctx.send("**[YouTube]** Queued: "+search[0]["title"])
 
         if FirstTimeSetup == True:
             Stop = False
@@ -466,7 +505,7 @@ class Media_Controls(commands.Cog):
     async def q(self, ctx):
         """View the queue"""
 
-        if len(queue_title) == 0: 
+        if len(queue.tracks) == 0: 
             await ctx.send("The queue is empty dumbass")
             return 0
 
@@ -475,8 +514,9 @@ class Media_Controls(commands.Cog):
         limit = 100
         out = 0
 
-        while out < len(queue_title):
-            y = queue_title[out:limit+out]
+        while out < len(queue.tracks):
+            y = queue.tracks[out:limit+out]
+
             r.append(y)
 
             out += len(y)
@@ -486,8 +526,8 @@ class Media_Controls(commands.Cog):
             with open("cache/queue.md", "w", encoding="utf-8") as f:
                 for i in item:
                     n = '\n' if count % 100 != 0 or count-1 == 0 else ''
-                    i = i.replace('\n','')
-                    if count == queue_index: 
+                    i = i["title"].replace('\n','')
+                    if count == queue.index: 
                         f.write('# {}: {}{}'.format(count-1,i,n))
                     else:
                         f.write('{}: {}{}'.format(count-1,i,n))
@@ -501,23 +541,22 @@ class Media_Controls(commands.Cog):
     @commands.command(aliases=["del","remove"])
     async def delete(self, ctx, integer):
         """Delete specific queued track"""
-        if int(queue_index)-1 == int(integer): ctx.voice_client.stop() 
-        await ctx.send("Removed: "+queue_title[int(integer)])
-        del queue[int(integer)]
-        del queue_title[int(integer)]
+        if int(queue.index)-1 == int(integer): ctx.voice_client.stop() 
+        await ctx.send("Removed: "+queue.tracks[int(integer)]["title"])
+        del queue.tracks[int(integer)]
+
 
     @commands.command()
     async def clear(self, ctx):
         """Clears the queue"""
-        global queue,queue_title,queue_index,Stop,FirstTimeSetup
-        if len(queue_title) == 0:
+        global queue,Stop,FirstTimeSetup
+        if len(queue.tracks) == 0:
             return None
         if await check_if_connected_and_connect(ctx) == False: return 0
         ctx.voice_client.stop()
         Stop = True
-        queue = []
-        queue_title = []
-        queue_index = int(0)
+        queue.tracks = []
+        queue.index = int(0)
         FirstTimeSetup = True
 
         logging.info("cleared")
@@ -526,13 +565,13 @@ class Media_Controls(commands.Cog):
     async def loop(self, ctx):
         """Toggles looping"""
         global queueMode
-        if queueMode == "loop":
-            queueMode = "none"
+        if queue.mode == "loop":
+            queue.mode = "none"
             logging.info("looping disabled")
 
             await ctx.send("Looping disabled")
         else:
-            queueMode = "loop"
+            queue.mode = "loop"
             logging.info("looping enabled")
 
             await ctx.send("Looping the queue")
@@ -577,43 +616,53 @@ async def recommend(ctx,* x):
 
     if '-yt' in x:
         try:
-            tracks = youtubeAPI.related(queue[queue_index-1],amount=limit)
-            queue.extend(tracks[0])
-            queue_title.extend(tracks[1])
+            tracks = youtubeAPI.related(queue.tracks[queue.index-1]["title"],amount=limit)
+            
+            queue.add(tracks, client.user.id)
 
-            await ctx.send("**[Youtube]** Queued "+str(len(tracks[0]))+" tracks")
+            await ctx.send("**[Youtube]** Queued "+str(len(tracks))+" tracks")
         except:
             pass
     else:
-        tracks = spotifyAPI.getRecommendation(queue_title[queue_index-1],limit)
+        tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index-1]["title"],limit)
         await ctx.send('**[Spotify]** Converting tracks this may take a bit')
         
         tracks = await functions.youtube_search_thread(tracks)
 
-        queue.extend(tracks[0])
-        queue_title.extend(tracks[1])
+        queue.add(tracks, client.user.id)
 
-        await ctx.send("**[Spotify]** Queued "+str(len(tracks[0]))+" tracks")
+        await ctx.send("**[Spotify]** Queued "+str(len(tracks))+" tracks")
 
 
 @client.command()
 async def join(ctx):
     """Joins a voice channel"""
-    await check_if_connected_and_connect(ctx)
+
+    if len(client.voice_clients) == 0:
+        await check_if_connected_and_connect(ctx)
+    else:
+
+        if ctx.author.voice is not None: 
+            channel = ctx.author.voice.channel
+            await client.voice_clients[0].disconnect()
+            await channel.connect()
+        else:
+            await ctx.send("You are not connected to a voice channel")
+
 
 @client.command(aliases=["exit","disconnect","fuck off"])
 async def leave(ctx):
-    global loopMode
+    global queue
     """Leaves a voice channel"""
     await Media_Controls.clear(0,ctx)
-    loopMode = configuration["queueMode"]
+    queue.mode = configuration["queueMode"]
     if configuration["JoinLeaveMessages"]: await ctx.send(pack.pick(1))
     await ctx.voice_client.disconnect()
     
 
 @client.event
 async def on_voice_state_update(member,before,after):
-    global Stop, queue, queue_title, queue_index, FirstTimeSetup, loopMode
+    global Stop, queue, FirstTimeSetup
     if before.channel != None:
         vc = client.get_channel(before.channel.id)
 
@@ -632,10 +681,10 @@ async def on_voice_state_update(member,before,after):
 
             await member.guild.voice_client.disconnect()
             Stop = True
-            loopMode = configuration["queueMode"]
-            queue = []
-            queue_title = []
-            queue_index = int(0)
+            queue.mode = configuration["queueMode"]
+            queue.tracks = []
+
+            queue.index = int(0)
             FirstTimeSetup = True
             logging.info("disconnected")
         else:

@@ -36,7 +36,7 @@ def getRecommendation(song_name,limit):
     URL = 'https://api.spotify.com/v1/search?q={}&type=track&limit=1'.format(song_name)
     data = requests.get(URL, headers=headers)
 
-    logging.info('Search: {}'.format(data))
+    logging.info('Search: {} | {}'.format(song_name,data))
     data = json.loads(data.text)
 
     track_id = data['tracks']['items'][0]['id']
