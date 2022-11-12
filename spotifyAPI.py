@@ -17,6 +17,24 @@ def _getToken():
     auth_response_data = auth_response.json()
     return auth_response_data['access_token']
 
+def search(query, type):
+    access_token = _getToken()
+
+
+    query = str(query).replace(' ','+')
+
+    headers = {
+        'Authorization': 'Bearer {token}'.format(token=access_token)
+    }
+
+    URL = 'https://api.spotify.com/v1/search?q={}&type={}&limit=1'.format(query, type)
+    data = requests.get(URL, headers=headers)
+
+    return data.text
+
+
+
+
 def getRecommendation(song_name,limit):
     '''Get a list of similar songs from another song name (spotify search)'''
 
