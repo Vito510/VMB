@@ -103,14 +103,23 @@ class YTDLSource(discord.PCMVolumeTransformer):
         try:
             data = ytdl.extract_info(url, download=False)
         except yt_dlp.utils.DownloadError as e:
-            tmp = queue.tracks[queue.index]['source'].split("=")[-1].replace("\n", "")
-            logging.info(f'{tmp} unavailable, removed from queue')
-            if len(queue.tracks) == 1:
-                Stop = True
-                FirstTimeSetup = True
-            del queue.tracks[queue.index]
-            queue.index -= 1  # After this function queue.index is added once more so -1 will become 0
-            return 0
+            try:
+                # Try searching using title instead
+                tmp = queue.tracks[queue.index]['source'].split("=")[-1].replace("\n", "")
+                logging.warning(f'{tmp} unavailable, searching for alternative')
+                url = functions.youtube_search(queue.tracks[queue.index]['title'])[0]['source']
+                data = ytdl.extract_info(url, download=False)
+            except Exception as e:
+                # Delete entry
+                print(e)
+                tmp = queue.tracks[queue.index]['source'].split("=")[-1].replace("\n", "")
+                logging.warning(f'{tmp} unavailable, removed from queue')
+                if len(queue.tracks) == 1:
+                    Stop = True
+                    FirstTimeSetup = True
+                del queue.tracks[queue.index]
+                queue.index -= 1  # After this function queue.index is added once more so -1 will become 0
+                return 0
         except Exception as e:
             logging.error(e)
             return 0

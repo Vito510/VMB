@@ -97,7 +97,8 @@ def youtube_search(search):
 
         cache.save(search,search_url,search_title,0)
     else:
-        search_url = c['url']
+        c = c[0]
+        search_url = c['source']
         search_title = c['title']
     
     t = str(round((time.time()-start_time)*1000))+'ms'
