@@ -48,11 +48,17 @@ def search(search):
         if len(response["items"]) == 0:
             logging.info("No results found")
             return None
+        
+        try:
 
-        jsn = [{
-            "source": "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId'],
-            "title": unescape(response['items'][0]['snippet']['title'])
-        }]
+            jsn = [{
+                "source": "https://www.youtube.com/watch?v="+response['items'][0]['id']['videoId'],
+                "title": unescape(response['items'][0]['snippet']['title'])
+            }]
+        
+        except Exception as e:
+            logging.error("Youtube API v3 Error - falling back to youtube_search() - "+str(e))
+            return functions.youtube_search(search)
 
         cache.save(search,jsn[0]["source"],jsn[0]["title"],0)
     else:
