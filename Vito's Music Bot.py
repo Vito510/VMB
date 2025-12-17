@@ -86,7 +86,7 @@ class queue():
             i["parent"] = parent
             queue.tracks.append(i)
 
-    def now():
+    def now(self):
         return [queue.index - 1]
 
 

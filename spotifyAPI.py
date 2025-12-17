@@ -44,6 +44,8 @@ def getRecommendation(song_name,limit):
         limit = 100
     elif limit < 1:
         limit = 1
+    else:
+        limit = 10
 
     song_name = str(song_name).replace(' ','+')
 
@@ -51,23 +53,38 @@ def getRecommendation(song_name,limit):
         'Authorization': 'Bearer {token}'.format(token=access_token)
     }
 
-    URL = 'https://api.spotify.com/v1/search?q={}&type=track&limit=1'.format(song_name)
-    data = requests.get(URL, headers=headers)
+    url = "https://api.spotify.com/v1/search"
 
-    logging.info('Search: {} | {}'.format(song_name,data))
-    data = json.loads(data.text)
+    params = {
+        "q": song_name,
+        "type": "track",
+        "limit": 1
+    }
 
-    track_id = data['tracks']['items'][0]['id']
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    data_json = response.json()
+
+    logging.info('Search: {}'.format(song_name))
+    track_id = data_json['tracks']['items'][0]['id']
 
 
-    URL = 'https://api.spotify.com/v1/recommendations?limit={}&seed_tracks={}'.format(limit,track_id)
-    data = requests.get(URL, headers=headers)
-    logging.info('Recommendation: {}'.format(data))
-    data = json.loads(data.text)
+    url = 'https://api.spotify.com/v1/recommendations'
+    params = {
+        "seed_tracks": track_id,
+        "limit": limit
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    data_json = response.json()
+    logging.info('Recommendation: {}'.format(data_json))
 
     r = []
 
-    for item in data['tracks']:
+    for item in data_json['tracks']:
 
         title = item['name']
         artist = item['artists'][0]['name']
