@@ -18,6 +18,9 @@ import pack
 import spotifyAPI
 import youtubeAPI
 
+opus_path = '/usr/lib/libopus.so.0'  # apk add --no-cache opus-dev
+discord.opus.load_opus(opus_path)
+
 # from youtube_dl import YoutubeDL
 
 bf = '{l_bar}{bar:50}{r_bar}{bar:-10b}'
@@ -163,10 +166,10 @@ async def play_next(ctx):
         try:
             if queue.index < len(queue.tracks):
                 msg = ('**`' + 'Now playing track {}: {}'.format(queue.index,
-                                                                 queue.tracks[queue.index]["title"]) + '`**')
+                                                                    queue.tracks[queue.index]["title"]) + '`**')
                 if Stop == False: await ctx.send(msg, delete_after=10)  # now playing message
                 ctx.voice_client.play(source,
-                                      after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
+                                        after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), client.loop))
 
                 queue.index += 1
 
