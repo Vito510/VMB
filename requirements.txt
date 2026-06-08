@@ -6,3 +6,4 @@ youtube_dl
 youtube_search
 yt_dlp
 PyNaCl
+davey
