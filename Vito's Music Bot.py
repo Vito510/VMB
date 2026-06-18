@@ -652,24 +652,14 @@ async def recommend(ctx, *x):
             limit = 10
             pass
 
-    if '-yt' in x:
-        try:
-            tracks = youtubeAPI.related(queue.tracks[queue.index - 1]["title"], amount=limit)
-
-            queue.add(tracks, client.user.id)
-
-            await ctx.send("**[Youtube]** Queued " + str(len(tracks)) + " tracks")
-        except Exception:
-            pass
-    else:
-        tracks = spotifyAPI.getRecommendation(queue.tracks[queue.index - 1]["title"], limit)
-        await ctx.send('**[Spotify]** Converting tracks this may take a bit')
-
-        tracks = await functions.youtube_search_thread(tracks)
+    try:
+        tracks = youtubeAPI.related(queue.tracks[queue.index - 1]["title"], amount=limit)
 
         queue.add(tracks, client.user.id)
 
-        await ctx.send("**[Spotify]** Queued " + str(len(tracks)) + " tracks")
+        await ctx.send("**[Youtube]** Queued " + str(len(tracks)) + " tracks")
+    except Exception:
+        pass
 
 
 @client.command()
