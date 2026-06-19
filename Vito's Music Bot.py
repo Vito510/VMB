@@ -635,8 +635,7 @@ async def clear_cache(ctx):
     """clears playlist cache"""
     if configuration["AllowClearCache"] == False and ctx.author.id not in configuration["Admins"]: return 0
 
-    for item in os.listdir("cache/playlist"):
-        os.remove("cache/playlist/" + item)
+    cache.clear(0)
 
     logging.info("cleared")
     await ctx.send("Cleared cache")
